@@ -1,16 +1,22 @@
 package com.iceiony.visualcalendar
 
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import android.view.View
+import android.view.WindowManager
+import android.view.LayoutInflater
+import android.content.IntentFilter
+import android.graphics.PixelFormat
+import android.app.KeyguardManager
 
 class LockScreenOverlayService : Service() {
-    private var windowManager: WindowManager? = null
-    private var overlayView: View? = null
-    private val screenStateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            when (intent.action) {
-                Intent.ACTION_SCREEN_OFF -> showOverlay()
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_ON -> maybeShowOverlay()
                 Intent.ACTION_USER_PRESENT -> hideOverlay()
             }
         }
@@ -18,12 +24,11 @@ class LockScreenOverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        // Register receiver for screen state changes
         val filter = IntentFilter().apply {
-            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
             addAction(Intent.ACTION_USER_PRESENT)
         }
-        registerReceiver(screenStateReceiver, filter)
+        registerReceiver(screenReceiver, filter)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -34,34 +39,20 @@ class LockScreenOverlayService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        hideOverlay()
-        unregisterReceiver(screenStateReceiver)
+        unregisterReceiver(screenReceiver)
     }
 
-    private fun showOverlay() {
-        if (overlayView != null) return
-
-        windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-
-        overlayView = LayoutInflater.from(this).inflate(R.layout.overlay_layout, null)
-
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT
-        )
-
-        windowManager?.addView(overlayView, params)
+    private fun maybeShowOverlay() {
+        val km = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (km.isKeyguardLocked) {
+            val intent = Intent(this, LockScreenOverlayActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            startActivity(intent)
+        }
     }
 
     private fun hideOverlay() {
-        if (overlayView != null) {
-            windowManager?.removeView(overlayView)
-            overlayView = null
-        }
+        // Overlay activity handles its own finish() on unlock
     }
 }
