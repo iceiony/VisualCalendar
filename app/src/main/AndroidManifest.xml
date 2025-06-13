@@ -17,13 +17,6 @@
         tools:targetApi="30">
 
         <activity
-            android:name=".LockScreenOverlayActivity"
-            android:showWhenLocked="true"
-            android:theme="@style/OverlayTheme"
-            android:excludeFromRecents="true"
-            android:launchMode="singleInstance"/>
-
-        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.VisualCalendar">
@@ -35,9 +28,17 @@
         </activity>
 
         <service
-            android:name=".LockScreenOverlayService"
-            android:enabled="true"
-            android:exported="true" />
+            android:name=".LockScreenAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
     </application>
 
 </manifest>
