@@ -9,7 +9,7 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.FrameLayout
 
-class LockScreenAccessibilityService : AccessibilityService() {
+class CalendarAccessibilityService : AccessibilityService() {
     private var overlayView: View? = null
     private var windowManager: WindowManager? = null
 
