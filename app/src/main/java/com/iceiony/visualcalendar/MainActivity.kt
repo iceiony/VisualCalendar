@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
             if (Settings.canDrawOverlays(this)) {
                 startAccessibilityService()
             } else {
-                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Permission not granted", Toast.LENGTH_SHORT).show()
             }
         }
 
