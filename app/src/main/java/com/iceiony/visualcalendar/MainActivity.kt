@@ -1,16 +1,19 @@
 package com.iceiony.visualcalendar
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 
 class MainActivity : AppCompatActivity() {
     private lateinit var overlayPermissionLauncher: androidx.activity.result.ActivityResultLauncher<Intent>
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
