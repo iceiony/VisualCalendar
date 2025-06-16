@@ -5,13 +5,23 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var overlayPermissionLauncher: androidx.activity.result.ActivityResultLauncher<Intent>
+    lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
+    var overlayPermissionCallback = ActivityResultCallback<ActivityResult> {
+        if (Settings.canDrawOverlays(this)) {
+            startAccessibilityService()
+        } else {
+            Toast.makeText(this, "Permission not granted to show overlay", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,14 +29,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         overlayPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) {
-            if (Settings.canDrawOverlays(this)) {
-                startAccessibilityService()
-            } else {
-                Toast.makeText(this, "Permission not granted", Toast.LENGTH_SHORT).show()
-            }
-        }
+            ActivityResultContracts.StartActivityForResult(),
+            overlayPermissionCallback
+        )
 
         // Check and request overlay permission
         if (!Settings.canDrawOverlays(this)) {
