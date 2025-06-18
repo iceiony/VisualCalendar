@@ -1,12 +1,14 @@
 package com.iceiony.visualcalendar
 
 import android.app.Activity
+import android.content.ContentResolver
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
@@ -36,15 +38,44 @@ class ShadowSettings {
         fun setCanDrawOverlays(value: Boolean) {
             canDrawOverlays = value
         }
+
+
+    }
+}
+
+@Implements(Settings.Secure::class)
+class ShadowSecureSettings {
+
+    companion object {
+        private val secureSettingsString = mutableMapOf<String, String>()
+
+        @Implementation
+        @JvmStatic
+        fun getString(resolver: ContentResolver, name: String): String? {
+            return secureSettingsString[name]
+        }
+
+
+        @JvmStatic
+        fun setSecureString(name: String, value: String) {
+            secureSettingsString[name] = value
+        }
+
+        @JvmStatic
+        fun clearAll() {
+            secureSettingsString.clear()
+        }
     }
 }
 
 @RunWith(RobolectricTestRunner::class)
-@Config(shadows = [ShadowSettings::class], sdk = [Build.VERSION_CODES.S])
+@Config(shadows = [ShadowSettings::class, ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
 class MainActivityTest {
     @Before
     fun setup() {
         Intents.init()
+        ShadowSettings.setCanDrawOverlays(false)
+        ShadowSecureSettings.clearAll()
     }
 
     @After
@@ -56,6 +87,10 @@ class MainActivityTest {
     fun test_MainActivity_requests_overlay_permissions_when_not_granted() {
         ShadowSettings.setCanDrawOverlays(false)
         ActivityScenario.launch(MainActivity::class.java)
+
+        val latestToastText = ShadowToast.getTextOfLatestToast()
+        assert(latestToastText == "Please enable overlay permission for Visual Calendar")
+
         intended(hasAction(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
         ShadowSettings.setCanDrawOverlays(true)
     }
@@ -79,11 +114,24 @@ class MainActivityTest {
     }
 
     @Test
-    fun test_MainActivity_requests_accessibility_when_overlay_already_granted() {
+    fun test_MainActivity_requests_accessibility_when_overlay_already_granted_but_not_accessibility() {
         ShadowSettings.setCanDrawOverlays(true)
         ActivityScenario.launch(MainActivity::class.java)
-        intended(not(hasAction(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)))
+        intended(hasAction(Settings.ACTION_MANAGE_OVERLAY_PERMISSION), Intents.times(0))
 
         intended(hasAction(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+    }
+
+    @Test
+    fun test_MainActivity_does_not_open_accessibility_settings_when_already_granted() {
+        ShadowSettings.setCanDrawOverlays(true)
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val serviceId = "${context.packageName}/com.iceiony.CalendarAccessibilityService"
+        ShadowSecureSettings.setSecureString(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, serviceId)
+
+        ActivityScenario.launch(MainActivity::class.java)
+
+        intended(hasAction(Settings.ACTION_ACCESSIBILITY_SETTINGS), Intents.times(0))
     }
 }

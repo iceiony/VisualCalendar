@@ -1,7 +1,9 @@
 package com.iceiony.visualcalendar
 
+import android.accessibilityservice.AccessibilityService
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
@@ -9,21 +11,21 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 
 class MainActivity : AppCompatActivity() {
-    lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
+    private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
     var overlayPermissionCallback = ActivityResultCallback<ActivityResult> {
-        if (Settings.canDrawOverlays(this)) {
-            startAccessibilityService()
-        } else {
+        if (!Settings.canDrawOverlays(this)) {
             Toast.makeText(this, "Permission not granted to show overlay", Toast.LENGTH_SHORT).show()
+        } else if (
+            !isAccessibilityServiceEnabled(this)
+        ) {
+            requestAccessibilityPermissions()
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -40,11 +42,27 @@ class MainActivity : AppCompatActivity() {
                 "package:$packageName".toUri()
             )
             overlayPermissionLauncher.launch(intent)
-        } else {
-            startAccessibilityService()
+
+            Toast.makeText(
+                this,
+                "Please enable overlay permission for Visual Calendar",
+                Toast.LENGTH_LONG
+            ).show()
+
+        } else if (
+            !isAccessibilityServiceEnabled(this)
+        ) {
+            requestAccessibilityPermissions()
         }
     }
-    private fun startAccessibilityService() {
+
+    private fun isAccessibilityServiceEnabled(context: Context): Boolean {
+        val enabledServices = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+            ?: return false
+
+        return enabledServices.contains(context.packageName)
+    }
+    private fun requestAccessibilityPermissions() {
         val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
         Toast.makeText(
             this,
