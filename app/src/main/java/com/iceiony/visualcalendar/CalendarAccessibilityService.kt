@@ -13,7 +13,7 @@ class CalendarAccessibilityService : AccessibilityService() {
     private var overlayView: View? = null
     private var windowManager: WindowManager? = null
 
-    override fun onServiceConnected() {
+    public override fun onServiceConnected() {
         super.onServiceConnected()
 
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
