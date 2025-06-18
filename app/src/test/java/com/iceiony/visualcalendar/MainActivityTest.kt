@@ -6,76 +6,40 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
-import org.hamcrest.Matchers.not
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.Implementation
 import org.robolectric.annotation.Implements
+import org.robolectric.shadows.ShadowSettings
 import org.robolectric.shadows.ShadowToast
 
-@Implements(Settings::class)
-class ShadowSettings {
-    companion object {
-        private var canDrawOverlays = false
-
-        @Implementation
-        @JvmStatic
-        fun canDrawOverlays(context: Context): Boolean {
-            return canDrawOverlays
-        }
-
-        @JvmStatic
-        fun setCanDrawOverlays(value: Boolean) {
-            canDrawOverlays = value
-        }
-
-
-    }
-}
-
-@Implements(Settings.Secure::class)
+@Implements(ShadowSettings.ShadowSecure::class)
 class ShadowSecureSettings {
-
     companion object {
-        private val secureSettingsString = mutableMapOf<String, String>()
-
-        @Implementation
         @JvmStatic
-        fun getString(resolver: ContentResolver, name: String): String? {
-            return secureSettingsString[name]
-        }
-
-
-        @JvmStatic
-        fun setSecureString(name: String, value: String) {
-            secureSettingsString[name] = value
-        }
-
-        @JvmStatic
-        fun clearAll() {
-            secureSettingsString.clear()
+        fun setString(cr: ContentResolver, name: String, value: String) {
+            Settings.Secure.putString(cr, name, value)
         }
     }
 }
 
 @RunWith(RobolectricTestRunner::class)
-@Config(shadows = [ShadowSettings::class, ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
+@Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
 class MainActivityTest {
     @Before
     fun setup() {
         Intents.init()
-        ShadowSettings.setCanDrawOverlays(false)
-        ShadowSecureSettings.clearAll()
+        //ShadowSettings.setCanDrawOverlays(false)
+        //ShadowSettings.ShadowSecure.reset();
+        //ShadowSettings.reset()
     }
 
     @After
@@ -128,7 +92,11 @@ class MainActivityTest {
 
         val context = ApplicationProvider.getApplicationContext<Context>()
         val serviceId = "${context.packageName}/com.iceiony.CalendarAccessibilityService"
-        ShadowSecureSettings.setSecureString(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, serviceId)
+
+        ShadowSecureSettings.setString(
+            context.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+            serviceId)
 
         ActivityScenario.launch(MainActivity::class.java)
 
