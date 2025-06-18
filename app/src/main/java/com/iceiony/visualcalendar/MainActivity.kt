@@ -15,7 +15,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
     var overlayPermissionCallback = ActivityResultCallback<ActivityResult> {
         if (!Settings.canDrawOverlays(this)) {
             Toast.makeText(this, "Permission not granted to show overlay", Toast.LENGTH_SHORT).show()
@@ -30,18 +29,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        overlayPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult(),
-            overlayPermissionCallback
-        )
-
         // Check and request overlay permission
         if (!Settings.canDrawOverlays(this)) {
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 "package:$packageName".toUri()
             )
-            overlayPermissionLauncher.launch(intent)
+            registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult(),
+                overlayPermissionCallback
+            ).launch(intent)
 
             Toast.makeText(
                 this,
