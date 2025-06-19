@@ -22,6 +22,7 @@ class CalendarAccessibilityService : AccessibilityService() {
         val inflater = LayoutInflater.from(this)
         val container = FrameLayout(this)
         overlayView = inflater.inflate(R.layout.overlay_layout, container)
+        overlayView?.visibility = View.GONE
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -38,7 +39,43 @@ class CalendarAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // Handle accessibility events if needed
+        if(event == null) return
+
+        if(event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            val packageName = event.packageName?.toString() ?: return
+
+            if (packageName.isBlank()) return
+
+            val activityName = event.className?.toString() ?: ""
+
+            val isVisible = overlayView?.visibility == View.VISIBLE
+
+            if (isHomeScreen(packageName) || IsOwnOverlay(packageName, activityName)) {
+                if (!isVisible) {
+                    overlayView?.visibility = View.VISIBLE
+                }
+            } else {
+                if (isVisible) {
+                    // Hide the overlay view when another app is opened
+                    overlayView?.visibility = View.GONE
+                }
+            }
+        }
+    }
+
+    private fun IsOwnOverlay(packageName: String, activityName: String): Boolean {
+        return (packageName == "com.iceiony.visualcalendar" && activityName == "android.widget.FrameLayout")
+    }
+
+    private fun isHomeScreen(packageName: String): Boolean {
+        // Replace with more robust logic if needed
+        val homePackages = setOf(
+            "com.android.launcher", "com.android.launcher3",
+            "com.google.android.apps.nexuslauncher",
+            "com.sec.android.app.launcher",
+            "com.amazon.tahoe"
+        )
+        return packageName in homePackages
     }
 
     override fun onInterrupt() {
