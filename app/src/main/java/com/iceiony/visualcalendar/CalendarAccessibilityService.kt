@@ -1,6 +1,8 @@
 package com.iceiony.visualcalendar
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -12,6 +14,13 @@ import android.widget.FrameLayout
 class CalendarAccessibilityService : AccessibilityService() {
     private var overlayView: View? = null
     private var windowManager: WindowManager? = null
+
+    private var homePackages = setOf(
+        "com.android.launcher", "com.android.launcher3",
+        "com.google.android.apps.nexuslauncher",
+        "com.sec.android.app.launcher",
+        "com.amazon.tahoe", // Fire OS launcher package
+    )
 
     public override fun onServiceConnected() {
         super.onServiceConnected()
@@ -36,6 +45,14 @@ class CalendarAccessibilityService : AccessibilityService() {
         params.gravity = Gravity.TOP
 
         windowManager?.addView(container, params)
+
+        val intent = Intent(Intent.ACTION_MAIN)
+        intent.addCategory(Intent.CATEGORY_HOME)
+        val resolveInfo = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        val launcherPackageName = resolveInfo?.activityInfo?.packageName
+        if (launcherPackageName != null) {
+            homePackages = homePackages + launcherPackageName
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -69,12 +86,6 @@ class CalendarAccessibilityService : AccessibilityService() {
 
     private fun isHomeScreen(packageName: String): Boolean {
         // Replace with more robust logic if needed
-        val homePackages = setOf(
-            "com.android.launcher", "com.android.launcher3",
-            "com.google.android.apps.nexuslauncher",
-            "com.sec.android.app.launcher",
-            "com.amazon.tahoe"
-        )
         return packageName in homePackages
     }
 
