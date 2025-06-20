@@ -48,6 +48,7 @@ class CalendarAccessibilityServiceTest {
         assert(shadowWindowManager.views.isEmpty()) {
             "Overlay view should be removed from the WindowManager on service destruction"
         }
+
     }
 
     @Test

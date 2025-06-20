@@ -1,20 +1,40 @@
 package com.iceiony.visualcalendar
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Intent
 import android.graphics.PixelFormat
+import android.os.Binder
+import android.os.IBinder
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.FrameLayout
+import androidx.preference.PreferenceManager
+import java.util.concurrent.atomic.AtomicBoolean
+import androidx.core.content.edit
 
 class CalendarAccessibilityService : AccessibilityService() {
     private var overlayView: View? = null
     private var windowManager: WindowManager? = null
 
+    public override fun onCreate() {
+        super.onCreate()
+        PreferenceManager
+            .getDefaultSharedPreferences(this)
+            .edit {
+                putBoolean("service_created", true)
+            }
+    }
+
     public override fun onServiceConnected() {
         super.onServiceConnected()
+        PreferenceManager
+            .getDefaultSharedPreferences(this)
+            .edit {
+                putBoolean("service_connected", true)
+            }
 
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
@@ -22,7 +42,6 @@ class CalendarAccessibilityService : AccessibilityService() {
         val inflater = LayoutInflater.from(this)
         val container = FrameLayout(this)
         overlayView = inflater.inflate(R.layout.overlay_layout, container)
-        overlayView?.visibility = View.GONE
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -50,7 +69,7 @@ class CalendarAccessibilityService : AccessibilityService() {
 
             val isVisible = overlayView?.visibility == View.VISIBLE
 
-            if (isHomeScreen(packageName) || IsOwnOverlay(packageName, activityName)) {
+            if (isHomeScreen(packageName) || isOwnOverlay(packageName, activityName)) {
                 if (!isVisible) {
                     overlayView?.visibility = View.VISIBLE
                 }
@@ -63,7 +82,7 @@ class CalendarAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun IsOwnOverlay(packageName: String, activityName: String): Boolean {
+    private fun isOwnOverlay(packageName: String, activityName: String): Boolean {
         return (packageName == "com.iceiony.visualcalendar" && activityName == "android.widget.FrameLayout")
     }
 
