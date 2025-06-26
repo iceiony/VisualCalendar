@@ -45,7 +45,7 @@ class iCalDataProviderTest {
 
         var events = dataProvider.today().test()
 
-        assert(!events.values().isEmpty()) {
+        assert(events.values().isNotEmpty()) {
             "Expected to find events for today, but found none."
         }
 
@@ -66,7 +66,7 @@ class iCalDataProviderTest {
         }
 
         timeProvider.advanceTimeBy( 60 * 60 * 12 + 10) // Advance by half a day
-        assert(!events.values().isEmpty()) {
+        assert(events.values().isNotEmpty()) {
             "Expected to find next day's events but found none."
         }
 
