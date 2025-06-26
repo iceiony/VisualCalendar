@@ -21,6 +21,7 @@ import org.robolectric.shadows.ShadowWindowManagerImpl
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.S])
 class CalendarAccessibilityServiceTest {
+
     @Before
     fun setup() {
     }

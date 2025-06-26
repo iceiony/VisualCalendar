@@ -1,6 +1,13 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    alias(libs.plugins.kotlin.compose)
+}
+
+secrets {
+    propertiesFileName = "secrets.properties"
+    defaultPropertiesFileName = "local.defaults.properties"
 }
 
 android {
@@ -35,6 +42,8 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        compose = true
+        buildConfig = true
     }
     testOptions {
         unitTests {
@@ -44,10 +53,14 @@ android {
 }
 
 dependencies {
+    implementation("androidx.compose.runtime:runtime:1.8.3")
 
+    implementation("io.reactivex.rxjava3:rxjava:3.1.10")
     implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
     implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
-    implementation("io.reactivex.rxjava3:rxjava:3.1.5")
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("net.sf.biweekly:biweekly:0.6.8")
 
     implementation("com.google.android.material:material:1.12.0")
     implementation(libs.androidx.core.ktx)
