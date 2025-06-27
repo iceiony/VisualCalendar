@@ -20,12 +20,17 @@
         tools:targetApi="30">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".OnboardingActivity"
+            android:exported="true"
+            android:theme="@style/Theme.VisualCalendar">
+        </activity>
+
+        <activity
+            android:name=".CalendarDayActivity"
             android:exported="true"
             android:theme="@style/Theme.VisualCalendar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

@@ -10,17 +10,19 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
+import android.content.Context
 
-class MainActivity : AppCompatActivity() {
+
+class OnboardingActivity : AppCompatActivity() {
     private lateinit var overlayCaller: ActivityResultLauncher<Intent>
     private lateinit var accessibilityCaller: ActivityResultLauncher<Intent>
 
     var overlayPermissionsCallback = ActivityResultCallback<ActivityResult> {
         checkAllPermissionsGranted()
 
-        if (!isOverlayPermissionGranted()) {
+        if (!Permissions.isOverlayPermissionGranted(this)) {
             Toast.makeText(this, "Permission not granted to show overlay", Toast.LENGTH_SHORT).show()
-        } else if ( !isAccessibilityServiceEnabled() ) {
+        } else if ( !Permissions.isAccessibilityServiceEnabled(this) ) {
             requestAccessibilityPermissions()
         }
     }
@@ -28,9 +30,9 @@ class MainActivity : AppCompatActivity() {
     var accessibilityPermissionsCallback = ActivityResultCallback<ActivityResult> {
         checkAllPermissionsGranted()
 
-        if (!isAccessibilityServiceEnabled()) {
+        if (!Permissions.isAccessibilityServiceEnabled(this)) {
             Toast.makeText(this, "Permission not granted for accessibility service", Toast.LENGTH_SHORT).show()
-        } else if (!isOverlayPermissionGranted()) {
+        } else if (!Permissions.isOverlayPermissionGranted(this)) {
             requestOverlayPermissions()
         }
     }
@@ -43,27 +45,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         registerPermissionsLaunchers()
 
-        if (!isOverlayPermissionGranted()) {
+        if (!Permissions.isOverlayPermissionGranted(this)) {
             requestOverlayPermissions()
-        } else if ( !isAccessibilityServiceEnabled() ) {
+        } else if ( !Permissions.isAccessibilityServiceEnabled(this) ) {
             requestAccessibilityPermissions()
         }
     }
 
-    private fun isOverlayPermissionGranted(): Boolean {
-        return Settings.canDrawOverlays(this)
-    }
-
-    private fun isAccessibilityServiceEnabled(): Boolean {
-        val enabledServices = Settings.Secure.getString(this.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
-            ?: return false
-
-        return enabledServices.contains(this.packageName)
-    }
-
     private fun checkAllPermissionsGranted(): Boolean {
-        if(isOverlayPermissionGranted() && isAccessibilityServiceEnabled()) {
-            startActivity(Intent(this, CalendarActivity::class.java))
+        if(Permissions.allGranted(this)) {
             finish()
             return true
         }

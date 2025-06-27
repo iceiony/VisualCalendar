@@ -12,7 +12,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.widget.FrameLayout
 
 class CalendarAccessibilityService : AccessibilityService() {
-    private var overlayView: View? = null
+    private var calendarView: View? = null
     private var windowManager: WindowManager? = null
 
     private var homePackages = setOf(
@@ -30,8 +30,8 @@ class CalendarAccessibilityService : AccessibilityService() {
         // Create and add overlay view
         val inflater = LayoutInflater.from(this)
         val container = FrameLayout(this)
-        overlayView = inflater.inflate(R.layout.overlay_layout, container)
-        overlayView?.visibility = View.GONE
+        calendarView = inflater.inflate(R.layout.overlay_layout, container)
+        calendarView?.visibility = View.GONE
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -65,16 +65,16 @@ class CalendarAccessibilityService : AccessibilityService() {
 
             val activityName = event.className?.toString() ?: ""
 
-            val isVisible = overlayView?.visibility == View.VISIBLE
+            val isVisible = calendarView?.visibility == View.VISIBLE
 
             if (isHomeScreen(packageName) || IsOwnOverlay(packageName, activityName)) {
                 if (!isVisible) {
-                    overlayView?.visibility = View.VISIBLE
+                    calendarView?.visibility = View.VISIBLE
                 }
             } else {
                 if (isVisible) {
                     // Hide the overlay view when another app is opened
-                    overlayView?.visibility = View.GONE
+                    calendarView?.visibility = View.GONE
                 }
             }
         }
@@ -94,9 +94,9 @@ class CalendarAccessibilityService : AccessibilityService() {
     }
 
     override fun onDestroy() {
-        if (overlayView != null && windowManager != null) {
-            windowManager?.removeView(overlayView)
-            overlayView = null
+        if (calendarView != null && windowManager != null) {
+            windowManager?.removeView(calendarView)
+            calendarView = null
         }
         super.onDestroy()
     }

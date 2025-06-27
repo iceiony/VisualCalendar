@@ -1,7 +1,6 @@
 package com.iceiony.visualcalendar
 
 import android.app.Activity
-import android.content.ContentResolver
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
@@ -18,25 +17,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.Implements
 import org.robolectric.shadows.ShadowSettings
 import org.robolectric.shadows.ShadowToast
 
 
-@Implements(ShadowSettings.ShadowSecure::class)
-class ShadowSecureSettings {
-    companion object {
-        @JvmStatic
-        fun setString(cr: ContentResolver, name: String, value: String) {
-            Settings.Secure.putString(cr, name, value)
-        }
-
-    }
-}
-
 @RunWith(RobolectricTestRunner::class)
 @Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
-class MainActivityTest {
+class OnboardingActivityTest {
     @Before
     fun setup() {
         Intents.init()
@@ -52,7 +39,7 @@ class MainActivityTest {
     @Test
     fun test_requests_overlay_permissions_when_not_granted() {
         ShadowSettings.setCanDrawOverlays(false)
-        ActivityScenario.launch(MainActivity::class.java)
+        ActivityScenario.launch(OnboardingActivity::class.java)
 
         val latestToastText = ShadowToast.getTextOfLatestToast()
         assert(latestToastText == "Please enable overlay permission for Visual Calendar") {
@@ -68,7 +55,7 @@ class MainActivityTest {
         ShadowSettings.setCanDrawOverlays(false)
         ShadowSettings.reset()
 
-        val mainActivity = ActivityScenario.launch(MainActivity::class.java)
+        val mainActivity = ActivityScenario.launch(OnboardingActivity::class.java)
 
         mainActivity.onActivity { activity ->
             activity.overlayPermissionsCallback.onActivityResult(
@@ -85,7 +72,7 @@ class MainActivityTest {
     @Test
     fun test_requests_accessibility_when_overlay_already_granted_but_not_accessibility() {
         ShadowSettings.setCanDrawOverlays(true)
-        ActivityScenario.launch(MainActivity::class.java)
+        ActivityScenario.launch(OnboardingActivity::class.java)
         intended(hasAction(Settings.ACTION_MANAGE_OVERLAY_PERMISSION), Intents.times(0))
 
         intended(hasAction(Settings.ACTION_ACCESSIBILITY_SETTINGS))
@@ -103,7 +90,7 @@ class MainActivityTest {
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
             serviceId)
 
-        ActivityScenario.launch(MainActivity::class.java)
+        ActivityScenario.launch(OnboardingActivity::class.java)
 
         intended(hasAction(Settings.ACTION_ACCESSIBILITY_SETTINGS), Intents.times(0))
     }
@@ -120,17 +107,20 @@ class MainActivityTest {
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
             serviceId)
 
-        ActivityScenario.launch(MainActivity::class.java)
+        val mainActivity  = ActivityScenario.launchActivityForResult(OnboardingActivity::class.java)
 
-        intended(hasComponent(CalendarActivity::class.java.name))
+        // Verify that the OnboardingActivity finishes and does not stay in the state
+        assert(mainActivity.result.resultCode in intArrayOf(Activity.RESULT_OK, Activity.RESULT_CANCELED)) {
+            "Expected OnboardingActivity finishes as soon as created if all permissions had been granted"
+        }
     }
 
     @Test
-    fun test_opens_CalendarActivity_after_permissions_are_granted() {
+    fun test_finishes_the_activity_when_all_permissions_granted() {
         ShadowSettings.setCanDrawOverlays(false)
         ShadowSettings.reset()
 
-        val mainActivity = ActivityScenario.launch(MainActivity::class.java)
+        val mainActivity = ActivityScenario.launch(OnboardingActivity::class.java)
 
         // Simulate granting overlay permission
         ShadowSettings.setCanDrawOverlays(true)
@@ -157,7 +147,11 @@ class MainActivityTest {
         }
 
 
-        // Verify that CalendarActivity was launched
-        intended(hasComponent(CalendarActivity::class.java.name))
+        // Verify the activity is finished
+        mainActivity.onActivity { activity ->
+            assert(activity.isFinishing) {
+                "Expected OnboardingActivity to finish when all permissions are granted"
+            }
+        }
     }
 }
