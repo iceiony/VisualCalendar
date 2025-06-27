@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">VisualCalendar</string>
     <string name="accessibility_service_description">Visual Calendar Screen Overlay</string>
+    <string name="grant_permissions">Please grant overlay and accessibility permissions</string>
+    <string name="grant_overlay_request">Please enable overlay permission for Visual Calendar</string>
+    <string name="grant_accessibility_request">Please enable Visual Calendar in Accessibility Services</string>
 </resources>
