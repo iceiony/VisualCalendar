@@ -1,16 +1,12 @@
 package com.iceiony.visualcalendar
 
-import android.view.View
+import android.widget.LinearLayout
+import android.content.Context
+import android.util.AttributeSet
 
-class CalendarDayView(
-    context : android.content.Context
-) : View(context) {
-
-    init {
-        setBackgroundColor(android.graphics.Color.WHITE)
-    }
-
-    override fun onDraw(canvas: android.graphics.Canvas) {
-        super.onDraw(canvas)
-    }
+class CalendarDayView @JvmOverloads constructor(
+    context : Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : LinearLayout(context, attrs, defStyleAttr) {
 }
