@@ -1,4 +1,4 @@
-package com.iceiony.visualcalendar
+package com.iceiony.visualcalendar.testutil
 
 import android.content.ContentResolver
 import android.provider.Settings

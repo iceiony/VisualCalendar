@@ -1,7 +1,7 @@
 package com.iceiony.visualcalendar
 
 import android.os.Build
-import io.reactivex.rxjava3.schedulers.TestScheduler
+import com.iceiony.visualcalendar.testutil.TestTimeProvider
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -9,21 +9,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDateTime
-
-class TestTimeProvider(
-    private var now: LocalDateTime
-) : TimeProvider {
-    val testScheduler = TestScheduler()
-
-    override fun now(): LocalDateTime {
-        return now;
-    }
-
-    fun advanceTimeBy(seconds : Long) {
-        now = now.plusSeconds(seconds)
-        testScheduler.advanceTimeBy(seconds, java.util.concurrent.TimeUnit.SECONDS)
-    }
-}
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.S])
