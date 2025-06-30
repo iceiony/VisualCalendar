@@ -1,16 +1,11 @@
 package com.iceiony.visualcalendar
 
-import android.content.Context
 import android.os.Build
-import android.widget.TextView
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.iceiony.visualcalendar.testutil.TestDataProvider
-import com.iceiony.visualcalendar.testutil.TestHelper
-import com.iceiony.visualcalendar.testutil.TestTimeProvider
+import com.iceiony.visualcalendar.preview.TestDataProvider
+import com.iceiony.visualcalendar.preview.TestTimeProvider
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -36,7 +31,7 @@ class CalendarDayViewTest {
         composeTestRule.setContent { CalendarDayView() }
 
         val today = java.time.LocalDate.now()
-        composeTestRule.onNodeWithText(today.dayOfWeek.name).assertExists()
+        composeTestRule.onNodeWithText("It's ${today.dayOfWeek.name}").assertExists()
     }
 
     @Test
@@ -71,6 +66,9 @@ class CalendarDayViewTest {
 
         composeTestRule.onNodeWithText("Test Event 1").assertExists()
         composeTestRule.onNodeWithText("Test Event 2").assertExists()
+
+        composeTestRule.onNodeWithText("(08:00 - 09:00)").assertExists()
+        composeTestRule.onNodeWithText("(10:00 - 11:00)").assertExists()
     }
 
 }
