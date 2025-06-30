@@ -3,6 +3,10 @@ package com.iceiony.visualcalendar
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.test.espresso.intent.Intents
 import org.junit.After
 import org.junit.Before
@@ -11,16 +15,21 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.iceiony.visualcalendar.testutil.TestHelper
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
+import org.junit.Rule
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 @Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
 class CalendarDayActivityTest {
+    @get:Rule
+    val composeTestRule = createComposeRule()
+
     @Before
     fun setup() {
         Intents.init()
@@ -60,9 +69,12 @@ class CalendarDayActivityTest {
         calendar.onActivity { activity ->
 
             val allViews = TestHelper.getAllViews(activity.window.decorView)
-            val calendarView = allViews.find { it is CalendarDayView } as? CalendarDayView
+            val calendarDayView = allViews.find { it is ComposeView } as? ComposeView
 
-            assert(calendarView != null) { "Activity should display the CalendarDayView" }
+            assert(calendarDayView != null) { "Activity should contain a composable view" }
+
+            val today = java.time.LocalDate.now()
+            composeTestRule.onNodeWithText(today.dayOfWeek.name).assertExists()
         }
     }
 

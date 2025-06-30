@@ -1,32 +1,32 @@
 package com.iceiony.visualcalendar
 
-import android.widget.LinearLayout
-import android.content.Context
-import android.util.AttributeSet
-import android.widget.TextView
-import com.iceiony.visualcalendar.providers.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.tooling.preview.Preview
+import com.iceiony.visualcalendar.providers.DataProvider
+import com.iceiony.visualcalendar.providers.iCalDataProvider
 
-class CalendarDayView @JvmOverloads constructor(
-    context : Context,
-    attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0,
+
+@Composable
+fun CalendarDayView(
+    modifier: Modifier = Modifier,
     dataProvider: DataProvider = iCalDataProvider(),
     timeProvider: TimeProvider = SystemTimeProvider()
-) : LinearLayout(context, attrs, defStyleAttr) {
-
-    init {
-        inflate(context, R.layout.calendar_day_view, this)
-
-        // Initialize the view with today's date
-        val today = timeProvider.now().toLocalDate()
-        val dayNameTextView = findViewById<TextView>(R.id.day_name)
-        dayNameTextView.text = today.dayOfWeek.name
-
-        // Load today's events from the data provider
-        //dataProvider.today()
-        //    .subscribe { events ->
-        //        // Handle events for today
-        //        // For example, update a RecyclerView or ListView with these events
-        //    }
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(text =  timeProvider.now().toLocalDate().dayOfWeek.name)
     }
+
+    LaunchedEffect(Unit) {
+    }
+}
+@Preview(showBackground = true)
+@Composable
+fun CalendarDayViewPreview() {
+    CalendarDayView()
 }

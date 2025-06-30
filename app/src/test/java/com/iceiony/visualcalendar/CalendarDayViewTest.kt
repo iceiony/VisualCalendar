@@ -1,21 +1,30 @@
 package com.iceiony.visualcalendar
 
-import android.os.Build
 import android.content.Context
+import android.os.Build
 import android.widget.TextView
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.iceiony.visualcalendar.testutil.TestDataProvider
 import com.iceiony.visualcalendar.testutil.TestHelper
+import com.iceiony.visualcalendar.testutil.TestTimeProvider
 import org.junit.After
 import org.junit.Before
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+import org.junit.Rule
 import org.junit.Test
-import org.robolectric.Robolectric
+import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import java.time.LocalDateTime
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.S])
 class CalendarDayViewTest {
+    @get:Rule
+    val composeTestRule = createComposeRule()
+
     @Before
     fun setup() { }
 
@@ -24,20 +33,45 @@ class CalendarDayViewTest {
 
     @Test
     fun test_initializes_successfully_for_todays_date() {
-        val calendarDayView = CalendarDayView(ApplicationProvider.getApplicationContext<Context>())
-        assert(calendarDayView != null) {
-            "CalendarDayView should initialize successfully"
-        }
+        composeTestRule.setContent { CalendarDayView() }
 
-        //check it contains TextView for today's day name (in any View)
         val today = java.time.LocalDate.now()
-        val dayNameTextView = TestHelper
-            .getAllViews(calendarDayView)
-            .find{ it is TextView && today.dayOfWeek.name == (it as TextView).text }
+        composeTestRule.onNodeWithText(today.dayOfWeek.name).assertExists()
+    }
 
-        assert(dayNameTextView != null) {
-            "CalendarDayView should contain TextView for today's day name"
+    @Test
+    fun test_shows_days_events(){
+        val timeProvider = TestTimeProvider(
+            now = LocalDateTime.of(2025, 6, 26, 7, 10)
+        )
+
+        val dataProvider = TestDataProvider(
+            listOf(
+                listOf(
+                    TestDataProvider.calendarEvent(
+                        "Test Event 1",
+                        LocalDateTime.of(2025, 6, 26, 8, 0),
+                        LocalDateTime.of(2025, 6, 26, 9, 0)
+                    ),
+                    TestDataProvider.calendarEvent(
+                        "Test Event 2",
+                        LocalDateTime.of(2025, 6, 26, 10, 0),
+                        LocalDateTime.of(2025, 6, 26, 11, 0)
+                    )
+                )
+            )
+        )
+
+        composeTestRule.setContent {
+            CalendarDayView(
+                dataProvider = dataProvider,
+                timeProvider = timeProvider
+            )
         }
+
+        composeTestRule.onNodeWithText("Test Event 1").assertExists()
+        composeTestRule.onNodeWithText("Test Event 2").assertExists()
     }
 
 }
+

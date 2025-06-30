@@ -54,6 +54,10 @@ android {
 
 dependencies {
     implementation("androidx.compose.runtime:runtime:1.8.3")
+    implementation("androidx.compose.ui:ui:1.8.3")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.8.3")
+    implementation("androidx.compose.material3:material3:1.3.2")
+    implementation("androidx.activity:activity-compose:1.10.1")
 
     implementation("io.reactivex.rxjava3:rxjava:3.1.10")
     implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
@@ -71,9 +75,12 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.espresso.intents)
+    implementation(libs.androidx.ui.test.junit4.android)
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14")
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.8.3")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.8.3")
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

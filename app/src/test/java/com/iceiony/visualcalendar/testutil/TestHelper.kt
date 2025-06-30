@@ -4,7 +4,6 @@ import android.view.View
 import android.view.ViewGroup
 
 object TestHelper {
-
     fun getAllViews(root: View): List<View> {
         val result = mutableListOf<View>()
         val queue = ArrayDeque<View>()
