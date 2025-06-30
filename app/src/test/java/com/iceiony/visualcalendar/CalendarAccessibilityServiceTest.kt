@@ -2,7 +2,6 @@ package com.iceiony.visualcalendar
 
 import android.content.Context
 import android.os.Build
-import android.provider.Settings
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import androidx.test.core.app.ApplicationProvider
@@ -14,7 +13,6 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.Implements
 import org.robolectric.shadows.ShadowWindowManagerImpl
 
 

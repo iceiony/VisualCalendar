@@ -1,6 +1,7 @@
 package com.iceiony.visualcalendar
 
 import android.os.Build
+import com.iceiony.visualcalendar.providers.iCalDataProvider
 import com.iceiony.visualcalendar.testutil.TestTimeProvider
 import org.junit.After
 import org.junit.Before

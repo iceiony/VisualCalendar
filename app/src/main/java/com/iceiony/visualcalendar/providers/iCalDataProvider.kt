@@ -1,8 +1,11 @@
-package com.iceiony.visualcalendar
+package com.iceiony.visualcalendar.providers
 
 import android.annotation.SuppressLint
 import biweekly.Biweekly
 import biweekly.component.VEvent
+import com.iceiony.visualcalendar.BuildConfig
+import com.iceiony.visualcalendar.SystemTimeProvider
+import com.iceiony.visualcalendar.TimeProvider
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.schedulers.Schedulers
@@ -12,6 +15,7 @@ import okhttp3.Request
 import java.io.IOException
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 
 @SuppressLint("CheckResult")
@@ -19,7 +23,7 @@ class iCalDataProvider(
     private val timeProvider: TimeProvider = SystemTimeProvider(),
     private val scheduler : Scheduler = Schedulers.io(),
     private val iCalUrl: String = BuildConfig.ICAL_DEBUG_URL
-) {
+) : DataProvider {
     private val subject = ReplaySubject.create<List<VEvent>>(1)
     private val client = OkHttpClient.Builder()
         .callTimeout(Duration.ofSeconds(30))
@@ -40,7 +44,7 @@ class iCalDataProvider(
                 val firstEventOfDay = subject.value?.firstOrNull() ?: return@filter true
                 val firstEventStart = (firstEventOfDay as VEvent)
                     .dateStart.value.toInstant()
-                    .atZone(java.time.ZoneOffset.systemDefault())
+                    .atZone(ZoneOffset.systemDefault())
                     .toLocalDate()?.atStartOfDay()
 
                 today.isAfter(firstEventStart)
@@ -61,8 +65,8 @@ class iCalDataProvider(
         val calendar = Biweekly.parse(body).first()           // parse to ICalendar
             ?: throw IllegalStateException("Invalid ICS feed")
 
-        val today = now.toLocalDate().atStartOfDay().toInstant(java.time.ZoneOffset.UTC)
-        val tomorrow = now.toLocalDate().plusDays(1).atStartOfDay().toInstant(java.time.ZoneOffset.UTC)
+        val today = now.toLocalDate().atStartOfDay().toInstant(ZoneOffset.UTC)
+        val tomorrow = now.toLocalDate().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
 
         return calendar.events.filter() { event ->
             event.dateStart.value.toInstant().isAfter(today) &&
@@ -70,7 +74,7 @@ class iCalDataProvider(
         }
     }
 
-    fun today(): Observable<List<VEvent>> {
+    override fun today(): Observable<List<VEvent>> {
         return subject.hide()
     }
 }
