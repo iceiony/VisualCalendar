@@ -1,27 +1,24 @@
 package com.iceiony.visualcalendar
 
 import android.content.Intent
-import android.provider.Settings
-import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.net.toUri
 
 class CalendarDayActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        Log.d("CalendarDayActivity", "onCreate called")
         super.onCreate(savedInstanceState)
+
+        setContentView(R.layout.activity_calendar_day)
+
+        findViewById<ComposeView>(R.id.calendar_day_view).setContent {
+            CalendarDayView()
+        }
 
         if(!Permissions.allGranted(this)) {
             startActivity(Intent(this, OnboardingActivity::class.java))
-        } else {
-            setContentView(R.layout.activity_calendar_day)
-            findViewById<ComposeView>(R.id.calendar_day_view).setContent {
-                CalendarDayView()
-            }
         }
+
     }
 }

@@ -1,20 +1,36 @@
 package com.iceiony.visualcalendar
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.PixelFormat
+import android.os.Bundle
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.FrameLayout
+import android.util.Log
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 
-class CalendarAccessibilityService : AccessibilityService() {
-    private var calendarView: View? = null
+class CalendarAccessibilityService :
+    AccessibilityService(),
+    androidx.lifecycle.LifecycleOwner,
+    androidx.savedstate.SavedStateRegistryOwner
+{
+
+    private var calendarView: ComposeView? = null
     private var windowManager: WindowManager? = null
-
     private var homePackages = setOf(
         "com.android.launcher", "com.android.launcher3",
         "com.google.android.apps.nexuslauncher",
@@ -22,19 +38,39 @@ class CalendarAccessibilityService : AccessibilityService() {
         "com.amazon.tahoe", // Fire OS launcher package
     )
 
+    private var savedStateBundle: Bundle? = null
+
+    private val lifecycleRegistry = LifecycleRegistry(this)
+    override val lifecycle: Lifecycle
+        get() = lifecycleRegistry
+
+    private val savedStateRegistryController = SavedStateRegistryController.create(this)
+    override val savedStateRegistry: SavedStateRegistry
+        get() = savedStateRegistryController.savedStateRegistry
+
+    override fun onCreate() {
+        super.onCreate()
+        savedStateRegistryController.performAttach()
+        savedStateRegistryController.performRestore(savedStateBundle)
+
+        lifecycleRegistry.currentState = Lifecycle.State.CREATED
+    }
+
     public override fun onServiceConnected() {
         super.onServiceConnected()
 
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
-        // Create and add overlay view
-        val inflater = LayoutInflater.from(this)
-        val container = FrameLayout(this)
-        calendarView = inflater.inflate(R.layout.overlay_layout, container)
+        calendarView = ComposeView(this).apply{
+            setViewTreeSavedStateRegistryOwner(this@CalendarAccessibilityService)
+            setViewTreeLifecycleOwner(this@CalendarAccessibilityService)
+            setContent { CalendarDayView() }
+        }
+
         calendarView?.visibility = View.GONE
 
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
+            550.dpToPx(this),
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
@@ -44,7 +80,7 @@ class CalendarAccessibilityService : AccessibilityService() {
         )
         params.gravity = Gravity.TOP
 
-        windowManager?.addView(container, params)
+        windowManager?.addView(calendarView, params)
 
         val intent = Intent(Intent.ACTION_MAIN)
         intent.addCategory(Intent.CATEGORY_HOME)
@@ -53,6 +89,9 @@ class CalendarAccessibilityService : AccessibilityService() {
         if (launcherPackageName != null) {
             homePackages = homePackages + launcherPackageName
         }
+
+        lifecycleRegistry.currentState = Lifecycle.State.STARTED
+        lifecycleRegistry.currentState = Lifecycle.State.RESUMED
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -72,8 +111,7 @@ class CalendarAccessibilityService : AccessibilityService() {
                     calendarView?.visibility = View.VISIBLE
                 }
             } else {
-                if (isVisible) {
-                    // Hide the overlay view when another app is opened
+                if(isVisible) {
                     calendarView?.visibility = View.GONE
                 }
             }
@@ -81,7 +119,8 @@ class CalendarAccessibilityService : AccessibilityService() {
     }
 
     private fun IsOwnOverlay(packageName: String, activityName: String): Boolean {
-        return (packageName == "com.iceiony.visualcalendar" && activityName == "android.widget.FrameLayout")
+        Log.d("CalendarAccessibilityService", "Package: $packageName, Activity: $activityName")
+        return (packageName == "com.iceiony.visualcalendar" && activityName == "androidx.compose.ui.platform.ComposeView")
     }
 
     private fun isHomeScreen(packageName: String): Boolean {
@@ -90,14 +129,30 @@ class CalendarAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() {
-        // Handle interruption if needed
     }
 
     override fun onDestroy() {
+        savedStateBundle = Bundle().apply {
+            savedStateRegistryController.performSave(this)
+        }
+
+        lifecycleRegistry.currentState = Lifecycle.State.STARTED
+        lifecycleRegistry.currentState = Lifecycle.State.CREATED
+
         if (calendarView != null && windowManager != null) {
             windowManager?.removeView(calendarView)
             calendarView = null
         }
+
         super.onDestroy()
+
+        lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
     }
+
+}
+
+fun Int.dpToPx(context: Context): Int {
+    return TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP, this.toFloat(), context.resources.displayMetrics
+    ).toInt()
 }

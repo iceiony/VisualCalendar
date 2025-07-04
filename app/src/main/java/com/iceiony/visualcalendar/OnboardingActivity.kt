@@ -3,6 +3,7 @@ package com.iceiony.visualcalendar
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
@@ -37,6 +38,7 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d("OnboardingActivity", "onCreate called")
         super.onCreate(savedInstanceState)
 
         checkAllPermissionsGranted()

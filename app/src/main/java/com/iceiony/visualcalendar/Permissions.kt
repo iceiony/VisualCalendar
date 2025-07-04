@@ -2,11 +2,18 @@ package com.iceiony.visualcalendar
 
 import android.content.Context
 import android.provider.Settings
+import android.util.Log
 
 object Permissions {
 
     fun allGranted(context: Context): Boolean {
-        return isOverlayPermissionGranted(context) && isAccessibilityServiceEnabled(context)
+        val canDrawOverlays =  isOverlayPermissionGranted(context)
+        //Log.d("Permissions", "Overlay permission granted: $canDrawOverlays")
+
+        val accessibilityEnabled = isAccessibilityServiceEnabled(context)
+        //Log.d("Permissions", "Accessibility service enabled: $accessibilityEnabled")
+
+        return canDrawOverlays && accessibilityEnabled
     }
 
     fun isOverlayPermissionGranted(context: Context): Boolean {

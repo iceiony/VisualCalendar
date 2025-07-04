@@ -1,3 +1,5 @@
+import org.gradle.api.internal.changedetection.changes.DefaultTaskExecutionMode.incremental
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -50,6 +52,7 @@ android {
             isIncludeAndroidResources = true
         }
     }
+    buildToolsVersion = "35.0.0"
 }
 
 dependencies {
