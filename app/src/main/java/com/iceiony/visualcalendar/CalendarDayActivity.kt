@@ -16,7 +16,7 @@ class CalendarDayActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         if(!Permissions.allGranted(this)) {
-            startActivity(Intent(this, CalendarDayActivity::class.java))
+            startActivity(Intent(this, OnboardingActivity::class.java))
         } else {
             setContentView(R.layout.activity_calendar_day)
             findViewById<ComposeView>(R.id.calendar_day_view).setContent {

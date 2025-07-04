@@ -59,7 +59,7 @@ class CalendarDayActivityTest {
         ActivityScenario.launch(CalendarDayActivity::class.java)
 
         // Verify that the OnboardingActivity was launched
-        intended(hasComponent(CalendarDayActivity::class.java.name))
+        intended(hasComponent(OnboardingActivity::class.java.name))
     }
 
     @Test
@@ -74,7 +74,7 @@ class CalendarDayActivityTest {
             assert(calendarDayView != null) { "Activity should contain a composable view" }
 
             val today = java.time.LocalDate.now()
-            composeTestRule.onNodeWithText(today.dayOfWeek.name).assertExists()
+            composeTestRule.onNodeWithText("It's " + today.dayOfWeek.name).assertExists()
         }
     }
 
