@@ -1,6 +1,7 @@
 package com.iceiony.visualcalendar
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -66,13 +68,13 @@ fun CalendarDayView(
     val events by eventsFlow.collectAsState(initial = emptyList())
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize().padding(horizontal = 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = colorResource(id = R.color.teal_200),
+                    color = colorResource(id = R.color.teal_200).copy(alpha = 0.9f),
                     shape = RoundedCornerShape(8.dp)
                 )
         ) {
@@ -93,7 +95,7 @@ fun CalendarDayView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            color = colorResource(id = R.color.white),
+                            color = colorResource(id = R.color.white).copy(alpha = 0.9f),
                             shape = RoundedCornerShape(8.dp)
                         )
                 ) {

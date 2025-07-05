@@ -76,9 +76,14 @@ class iCalDataProvider(
 
     override fun refresh() {
         val now = timeProvider.now().toLocalDate().atStartOfDay()
-        subject.onNext(
-            getTodaysEvents(now)
-        )
+        Observable
+            .fromCallable{ getTodaysEvents(now) }
+            .subscribeOn(scheduler)
+            .observeOn(scheduler)
+            .subscribe(
+                { events -> subject.onNext(events) },
+                { error  -> subject.onError(error) }
+            )
     }
 
     override fun today(): Observable<List<VEvent>> {
