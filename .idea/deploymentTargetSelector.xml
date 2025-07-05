@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-07-04T13:53:08.758794200Z">
+        <DropdownSelection timestamp="2025-07-05T21:19:05.838041600Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=GCC1WD04214304EM" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=GN434J02328209LX" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -17,9 +17,6 @@
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
       <SelectionState runConfigName="CalendarDayActivity">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
-      <SelectionState runConfigName="CalendarDayActivity (2)">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
       <SelectionState runConfigName="OnboardingActivity (1)">
