@@ -16,9 +16,6 @@
       <SelectionState runConfigName="Instrumentation Tests">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="OnboardingActivity">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="CalendarDayActivity">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>

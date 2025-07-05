@@ -89,7 +89,7 @@ class CalendarAccessibilityServiceTest {
             AccessibilityEvent().apply {
                 eventType = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
                 packageName = "com.iceiony.visualcalendar"
-                className = "android.widget.FrameLayout"
+                className = "androidx.compose.ui.platform.ComposeView"
             }
         )
 
