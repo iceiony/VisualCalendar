@@ -9,7 +9,7 @@ import java.time.ZoneId.systemDefault
 import java.util.Date
 
 class TestDataProvider(
-    private val testEvents: List<List<VEvent>>
+    private var testEvents: List<List<VEvent>>
 ) : DataProvider {
 
     companion object {
@@ -33,16 +33,17 @@ class TestDataProvider(
         }
     }
 
+    private var idx = -1
     private val subject = ReplaySubject.create<List<VEvent>>(1)
 
     init {
-        subject.onNext(testEvents.firstOrNull() ?: emptyList())
-        testEvents.drop(1)
+        idx++
+        subject.onNext(testEvents.getOrNull(idx) ?: emptyList())
     }
 
     fun publish_next() {
-        subject.onNext(testEvents.firstOrNull() ?: emptyList())
-        testEvents.drop(1)
+        idx++
+        subject.onNext(testEvents.getOrNull(idx) ?: emptyList())
     }
 
     override fun today(): Observable<List<VEvent>> {
@@ -50,7 +51,7 @@ class TestDataProvider(
     }
 
     override fun refresh() {
-        subject.onNext(testEvents.firstOrNull() ?: emptyList())
+        subject.onNext(testEvents.getOrNull(idx) ?: emptyList())
     }
 }
 

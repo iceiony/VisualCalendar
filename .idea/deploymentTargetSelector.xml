@@ -19,9 +19,6 @@
       <SelectionState runConfigName="CalendarDayActivity">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="CalendarDayActivity (1)">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="CalendarDayActivity (2)">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>

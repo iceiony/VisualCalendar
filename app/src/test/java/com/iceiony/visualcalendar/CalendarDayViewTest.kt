@@ -71,5 +71,49 @@ class CalendarDayViewTest {
         composeTestRule.onNodeWithText("(10:00 - 11:00)").assertExists()
     }
 
+    @Test
+    fun test_name_day_and_events_are_updated_when_day_changes() {
+        val timeProvider = TestTimeProvider(
+            now = LocalDateTime.of(2025, 6, 26, 7, 10)
+        )
+
+        val dataProvider = TestDataProvider(
+            listOf(
+                listOf(
+                    TestDataProvider.calendarEvent(
+                        "Test Day 1",
+                        LocalDateTime.of(2025, 6, 26, 8, 0),
+                        LocalDateTime.of(2025, 6, 26, 9, 0)
+                    )
+                ),
+                listOf(
+                    TestDataProvider.calendarEvent(
+                        "Test Day 2",
+                        LocalDateTime.of(2025, 6, 27, 7, 0),
+                        LocalDateTime.of(2025, 6, 27, 12, 0)
+                    )
+                )
+            )
+        )
+
+        composeTestRule.setContent {
+            CalendarDayView(
+                dataProvider = dataProvider,
+                timeProvider = timeProvider
+            )
+        }
+
+        composeTestRule.onNodeWithText("It's THURSDAY").assertExists()
+        composeTestRule.onNodeWithText("Test Day 1").assertExists()
+        composeTestRule.onNodeWithText("Test Day 2").assertDoesNotExist()
+
+        timeProvider.advanceTimeBy(16 * 60 * 60 + 50 * 60 + 1)
+        dataProvider.publish_next()
+
+        composeTestRule.onNodeWithText("It's FRIDAY").assertExists()
+        composeTestRule.onNodeWithText("Test Day 1").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Test Day 2").assertExists()
+    }
+
 }
 
