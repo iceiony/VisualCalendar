@@ -12,6 +12,7 @@ import java.util.Date
 
 interface DataProvider {
     fun today(): Observable<List<VEvent>>
+    fun refresh()
 }
 
 

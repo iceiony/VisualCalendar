@@ -74,6 +74,13 @@ class iCalDataProvider(
         }
     }
 
+    override fun refresh() {
+        val now = timeProvider.now().toLocalDate().atStartOfDay()
+        subject.onNext(
+            getTodaysEvents(now)
+        )
+    }
+
     override fun today(): Observable<List<VEvent>> {
         return subject.hide()
     }

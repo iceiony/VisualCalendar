@@ -42,10 +42,15 @@ class TestDataProvider(
 
     fun publish_next() {
         subject.onNext(testEvents.firstOrNull() ?: emptyList())
+        testEvents.drop(1)
     }
 
     override fun today(): Observable<List<VEvent>> {
         return subject.hide();
+    }
+
+    override fun refresh() {
+        subject.onNext(testEvents.firstOrNull() ?: emptyList())
     }
 }
 
