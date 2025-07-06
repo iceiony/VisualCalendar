@@ -1,11 +1,14 @@
 package com.iceiony.visualcalendar
 
+import android.content.Context
 import android.os.Build
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.iceiony.visualcalendar.preview.TestDataProvider
-import com.iceiony.visualcalendar.preview.TestTimeProvider
+import com.iceiony.visualcalendar.preview.PreviewDataProvider
+import com.iceiony.visualcalendar.preview.PreviewTimeProvider
+import com.iceiony.visualcalendar.testutil.TestTimeProvider
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -13,15 +16,30 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.time.LocalDateTime
+import android.util.Log
+import androidx.work.Configuration
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
 
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.S])
 class CalendarDayViewTest {
     @get:Rule
     val composeTestRule = createComposeRule()
+    private lateinit var context: Context
 
     @Before
-    fun setup() { }
+    fun setup() {
+        //configure work manager since view data refresh depends on it
+        context = ApplicationProvider.getApplicationContext<Context>()
+
+        val config = Configuration.Builder()
+            .setMinimumLoggingLevel(Log.DEBUG)
+            .setExecutor(SynchronousExecutor())
+            .build();
+
+        WorkManagerTestInitHelper.initializeTestWorkManager(context, config);
+    }
 
     @After
     fun tearDown() { }
@@ -36,19 +54,19 @@ class CalendarDayViewTest {
 
     @Test
     fun test_shows_days_events(){
-        val timeProvider = TestTimeProvider(
+        val timeProvider = PreviewTimeProvider(
             now = LocalDateTime.of(2025, 6, 26, 7, 10)
         )
 
-        val dataProvider = TestDataProvider(
+        val dataProvider = PreviewDataProvider(
             listOf(
                 listOf(
-                    TestDataProvider.calendarEvent(
+                    PreviewDataProvider.calendarEvent(
                         "Test Event 1",
                         LocalDateTime.of(2025, 6, 26, 8, 0),
                         LocalDateTime.of(2025, 6, 26, 9, 0)
                     ),
-                    TestDataProvider.calendarEvent(
+                    PreviewDataProvider.calendarEvent(
                         "Test Event 2",
                         LocalDateTime.of(2025, 6, 26, 10, 0),
                         LocalDateTime.of(2025, 6, 26, 11, 0)
@@ -73,21 +91,21 @@ class CalendarDayViewTest {
 
     @Test
     fun test_name_day_and_events_are_updated_when_day_changes() {
-        val timeProvider = TestTimeProvider(
-            now = LocalDateTime.of(2025, 6, 26, 7, 10)
+        val timeProvider = PreviewTimeProvider(
+            now = LocalDateTime.of(2025, 6, 26, 7, 10),
         )
 
-        val dataProvider = TestDataProvider(
+        val dataProvider = PreviewDataProvider(
             listOf(
                 listOf(
-                    TestDataProvider.calendarEvent(
+                    PreviewDataProvider.calendarEvent(
                         "Test Day 1",
                         LocalDateTime.of(2025, 6, 26, 8, 0),
                         LocalDateTime.of(2025, 6, 26, 9, 0)
                     )
                 ),
                 listOf(
-                    TestDataProvider.calendarEvent(
+                    PreviewDataProvider.calendarEvent(
                         "Test Day 2",
                         LocalDateTime.of(2025, 6, 27, 7, 0),
                         LocalDateTime.of(2025, 6, 27, 12, 0)

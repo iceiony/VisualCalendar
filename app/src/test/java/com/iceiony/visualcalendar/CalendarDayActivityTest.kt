@@ -23,15 +23,29 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
+import android.util.Log
+import androidx.work.Configuration
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
 
 @RunWith(AndroidJUnit4::class)
 @Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
 class CalendarDayActivityTest {
     @get:Rule
     val composeTestRule = createComposeRule()
+    private lateinit var context: Context
 
     @Before
     fun setup() {
+        //configure work manager since view data refresh depends on it
+        context = ApplicationProvider.getApplicationContext<Context>()
+
+        val config = Configuration.Builder()
+            .setMinimumLoggingLevel(Log.DEBUG)
+            .setExecutor(SynchronousExecutor())
+            .build();
+
+        WorkManagerTestInitHelper.initializeTestWorkManager(context, config);
         Intents.init()
 
         //assume overlay permissions granted

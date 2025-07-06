@@ -1,6 +1,8 @@
 package com.iceiony.visualcalendar.providers
 
+import android.content.Context
 import android.annotation.SuppressLint
+import androidx.work.PeriodicWorkRequestBuilder
 import biweekly.Biweekly
 import biweekly.component.VEvent
 import com.iceiony.visualcalendar.BuildConfig
@@ -17,6 +19,9 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
+import android.util.Log
 
 @SuppressLint("CheckResult")
 class iCalDataProvider(
@@ -24,6 +29,12 @@ class iCalDataProvider(
     private val scheduler : Scheduler = Schedulers.io(),
     private val iCalUrl: String = BuildConfig.ICAL_DEBUG_URL
 ) : DataProvider {
+
+    companion object {
+        @Volatile
+        private lateinit var _instance: DataProvider
+    }
+
     private val subject = ReplaySubject.create<List<VEvent>>(1)
     private val client = OkHttpClient.Builder()
         .callTimeout(Duration.ofSeconds(30))
@@ -34,27 +45,9 @@ class iCalDataProvider(
             throw IllegalStateException("iCalUrl is not configured")
         }
 
-        Observable
-            .interval(0, 1, TimeUnit.HOURS, scheduler)
-            .subscribeOn(scheduler)
-            .map { timeProvider.now().toLocalDate().atStartOfDay() }
-            .distinctUntilChanged()
-            .filter { today ->
-                if (!subject.hasValue()) return@filter true
+        _instance = this
 
-                val firstEventOfDay = subject.value?.firstOrNull() ?: return@filter true
-                val firstEventStart = (firstEventOfDay as VEvent)
-                    .dateStart.value.toInstant()
-                    .atZone(ZoneOffset.systemDefault())
-                    .toLocalDate()?.atStartOfDay()
-
-                return@filter today.isAfter(firstEventStart)
-            }
-            .map { now -> getTodaysEvents(now) }
-            .subscribe(
-                { events -> subject.onNext(events) },
-                { error  -> subject.onError(error) }
-            )
+        refresh()
     }
 
     fun getTodaysEvents(now: LocalDateTime): List<VEvent> {
@@ -75,7 +68,7 @@ class iCalDataProvider(
     }
 
     override fun refresh() {
-        val now = timeProvider.now().toLocalDate().atStartOfDay()
+        val now = timeProvider.now()
         Observable
             .fromCallable{ getTodaysEvents(now) }
             .subscribeOn(scheduler)
@@ -86,7 +79,46 @@ class iCalDataProvider(
             )
     }
 
-    override fun today(): Observable<List<VEvent>> {
+    override fun today(context: Context): Observable<List<VEvent>> {
+        scheduleDailyRefresh(context)
         return subject.hide()
     }
+
+
+    class iCalRefreshWorker(
+        context: Context,
+        params: WorkerParameters
+    ) : androidx.work.CoroutineWorker(context, params) {
+
+        override suspend fun doWork(): Result {
+            try {
+                iCalDataProvider._instance.refresh()
+                return Result.success()
+            } catch (e: Exception) {
+                Log.e("iCalDataProvider", "Error refreshing iCal data", e)
+                return Result.failure()
+            }
+        }
+    }
+
+
+    fun scheduleDailyRefresh(context: Context) {
+        val now = timeProvider.now()
+        val tomorrow = now.toLocalDate().plusDays(1).atStartOfDay().plusSeconds(5)
+        val delay = Duration.between(now, tomorrow).toMillis()
+
+        var work = PeriodicWorkRequestBuilder<iCalRefreshWorker>(1, TimeUnit.DAYS)
+            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .addTag("com.iceiony.visualcalendar")
+            .build()
+
+        WorkManager.getInstance(context)
+            .enqueueUniquePeriodicWork(
+                "iCalDataProvider.refresh()",
+                androidx.work.ExistingPeriodicWorkPolicy.REPLACE,
+                work
+            )
+    }
+
+
 }

@@ -1,5 +1,7 @@
 package com.iceiony.visualcalendar.providers
 
+import android.content.Context
+import android.util.Log
 import biweekly.component.VEvent
 import biweekly.property.DateEnd
 import biweekly.property.DateStart
@@ -10,8 +12,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Date
 
+
 interface DataProvider {
-    fun today(): Observable<List<VEvent>>
+    fun today(context: Context): Observable<List<VEvent>>
     fun refresh()
 }
 

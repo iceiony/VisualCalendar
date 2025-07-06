@@ -1,5 +1,6 @@
 package com.iceiony.visualcalendar.preview
 
+import android.content.Context
 import biweekly.component.VEvent
 import com.iceiony.visualcalendar.providers.DataProvider
 import io.reactivex.rxjava3.core.Observable
@@ -8,7 +9,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId.systemDefault
 import java.util.Date
 
-class TestDataProvider(
+class PreviewDataProvider(
     private var testEvents: List<List<VEvent>>
 ) : DataProvider {
 
@@ -46,7 +47,7 @@ class TestDataProvider(
         subject.onNext(testEvents.getOrNull(idx) ?: emptyList())
     }
 
-    override fun today(): Observable<List<VEvent>> {
+    override fun today(context : Context): Observable<List<VEvent>> {
         return subject.hide();
     }
 

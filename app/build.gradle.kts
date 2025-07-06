@@ -67,6 +67,9 @@ dependencies {
     implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.10.2")
 
+    implementation("androidx.work:work-runtime:2.10.2")
+    implementation("androidx.work:work-runtime-ktx:2.10.2")
+
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("net.sf.biweekly:biweekly:0.6.8")
 
@@ -84,10 +87,12 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14")
     testImplementation("androidx.compose.ui:ui-test-junit4:1.8.3")
+    testImplementation("androidx.work:work-testing:2.10.2")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.8.3")
     debugImplementation(libs.androidx.ui.tooling)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation("androidx.test.espresso:espresso-intents:3.6.1")
+    androidTestImplementation("androidx.work:work-testing:2.10.2")
 }

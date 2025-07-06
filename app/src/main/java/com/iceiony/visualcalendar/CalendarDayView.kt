@@ -1,13 +1,10 @@
 package com.iceiony.visualcalendar
 
-import android.util.Log
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.PowerManager
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,16 +22,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.iceiony.visualcalendar.preview.TestDataProvider
-import com.iceiony.visualcalendar.preview.TestTimeProvider
+import com.iceiony.visualcalendar.preview.PreviewDataProvider
+import com.iceiony.visualcalendar.preview.PreviewTimeProvider
 import com.iceiony.visualcalendar.providers.DataProvider
 import com.iceiony.visualcalendar.providers.iCalDataProvider
 import com.iceiony.visualcalendar.providers.toTime
@@ -65,7 +58,7 @@ fun CalendarDayView(
     }
 
     val eventsFlow = remember(dataProvider) {
-        dataProvider.today().asFlow()
+        dataProvider.today(context).asFlow()
     }
 
     val events by eventsFlow.collectAsState(initial = emptyList())
@@ -127,19 +120,19 @@ fun CalendarDayView(
 @Preview()
 @Composable
 fun CalendarDayViewPreview() {
-    val timeProvider = TestTimeProvider(
+    val timeProvider = PreviewTimeProvider(
         now = LocalDateTime.of(2025, 6, 26, 7, 10)
     )
 
-    val dataProvider = TestDataProvider(
+    val dataProvider = PreviewDataProvider(
         listOf(
             listOf(
-                TestDataProvider.calendarEvent(
+                PreviewDataProvider.calendarEvent(
                     "Test Event 1",
                     LocalDateTime.of(2025, 6, 26, 8, 0),
                     LocalDateTime.of(2025, 6, 26, 9, 0)
                 ),
-                TestDataProvider.calendarEvent(
+                PreviewDataProvider.calendarEvent(
                     "Test Event 2 👌",
                     LocalDateTime.of(2025, 6, 26, 10, 0),
                     LocalDateTime.of(2025, 6, 26, 11, 0)
