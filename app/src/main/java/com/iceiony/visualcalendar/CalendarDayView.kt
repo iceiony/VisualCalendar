@@ -1,5 +1,11 @@
 package com.iceiony.visualcalendar
 
+import android.util.Log
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.PowerManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -20,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,30 +47,26 @@ fun CalendarDayView(
     dataProvider: DataProvider = iCalDataProvider(),
     timeProvider: TimeProvider = SystemTimeProvider()
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> {
+    val context = LocalContext.current
+    DisposableEffect(context) {
+        val screenOnReceiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context, intent: Intent) {
+                if (intent.action == Intent.ACTION_SCREEN_ON) {
                     dataProvider.refresh()
                 }
-                else -> {}
             }
         }
-
-        lifecycleOwner.lifecycle.addObserver(observer)
+        val filter = IntentFilter(Intent.ACTION_SCREEN_ON)
+        context.registerReceiver(screenOnReceiver, filter)
 
         onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
+            context.unregisterReceiver(screenOnReceiver)
         }
     }
 
     val eventsFlow = remember(dataProvider) {
         dataProvider.today().asFlow()
     }
-
-
 
     val events by eventsFlow.collectAsState(initial = emptyList())
 

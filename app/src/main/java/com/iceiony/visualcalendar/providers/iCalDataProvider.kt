@@ -36,6 +36,7 @@ class iCalDataProvider(
 
         Observable
             .interval(0, 1, TimeUnit.HOURS, scheduler)
+            .subscribeOn(scheduler)
             .map { timeProvider.now().toLocalDate().atStartOfDay() }
             .distinctUntilChanged()
             .filter { today ->
@@ -47,10 +48,9 @@ class iCalDataProvider(
                     .atZone(ZoneOffset.systemDefault())
                     .toLocalDate()?.atStartOfDay()
 
-                today.isAfter(firstEventStart)
+                return@filter today.isAfter(firstEventStart)
             }
             .map { now -> getTodaysEvents(now) }
-            .subscribeOn(scheduler)
             .subscribe(
                 { events -> subject.onNext(events) },
                 { error  -> subject.onError(error) }
