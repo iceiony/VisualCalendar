@@ -41,21 +41,6 @@ fun CalendarDayView(
     timeProvider: TimeProvider = SystemTimeProvider()
 ) {
     val context = LocalContext.current
-    DisposableEffect(context) {
-        val screenOnReceiver = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context, intent: Intent) {
-                if (intent.action == Intent.ACTION_SCREEN_ON) {
-                    dataProvider.refresh()
-                }
-            }
-        }
-        val filter = IntentFilter(Intent.ACTION_SCREEN_ON)
-        context.registerReceiver(screenOnReceiver, filter)
-
-        onDispose {
-            context.unregisterReceiver(screenOnReceiver)
-        }
-    }
 
     val eventsFlow = remember(dataProvider) {
         dataProvider.today(context).asFlow()
