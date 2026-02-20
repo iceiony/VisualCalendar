@@ -33,6 +33,7 @@ import com.iceiony.visualcalendar.providers.iCalDataProvider
 import com.iceiony.visualcalendar.providers.toTime
 import kotlinx.coroutines.rx3.asFlow
 import java.time.LocalDateTime
+import kotlin.concurrent.timer
 
 @Composable
 fun CalendarDayView(
@@ -48,6 +49,14 @@ fun CalendarDayView(
 
     val events by eventsFlow.collectAsState(initial = emptyList())
 
+    val title = if(timeProvider.now().hour < 18) {
+        val today = timeProvider.now().toLocalDate()
+        "It's " + today.dayOfWeek.name
+    } else {
+        val tomorrow =  timeProvider.now().toLocalDate().atStartOfDay().plusDays(1)
+        "Tomorrow is " + tomorrow.dayOfWeek.name
+    }
+
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 2.dp)
     ) {
@@ -60,7 +69,7 @@ fun CalendarDayView(
                 )
         ) {
             Text(
-                text = "It's " + timeProvider.now().toLocalDate().dayOfWeek.name,
+                text = title,
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier.padding(vertical = 2.dp, horizontal = 16.dp)
             )
@@ -106,7 +115,7 @@ fun CalendarDayView(
 @Composable
 fun CalendarDayViewPreview() {
     val timeProvider = PreviewTimeProvider(
-        now = LocalDateTime.of(2025, 6, 26, 7, 10)
+        now = LocalDateTime.of(2025, 6, 26, 19, 10)
     )
 
     val dataProvider = PreviewDataProvider(
