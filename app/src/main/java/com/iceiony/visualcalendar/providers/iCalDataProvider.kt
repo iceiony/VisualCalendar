@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import android.util.Log
+import androidx.work.OneTimeWorkRequestBuilder
 
 @SuppressLint("CheckResult")
 class iCalDataProvider(
@@ -32,7 +33,7 @@ class iCalDataProvider(
 
     companion object {
         @Volatile
-        private lateinit var _instance: DataProvider
+        private lateinit var _instance: iCalDataProvider
     }
 
     private val subject = ReplaySubject.create<List<VEvent>>(1)
@@ -80,7 +81,7 @@ class iCalDataProvider(
     }
 
     override fun today(context: Context): Observable<List<VEvent>> {
-        scheduleDailyRefresh(context)
+        scheduleNextRefresh(context)
         return subject.hide()
     }
 
@@ -92,7 +93,9 @@ class iCalDataProvider(
 
         override suspend fun doWork(): Result {
             try {
-                iCalDataProvider._instance.refresh()
+                _instance.refresh()
+                _instance.scheduleNextRefresh(applicationContext)
+
                 return Result.success()
             } catch (e: Exception) {
                 Log.e("iCalDataProvider", "Error refreshing iCal data", e)
@@ -102,22 +105,18 @@ class iCalDataProvider(
     }
 
 
-    fun scheduleDailyRefresh(context: Context) {
+    fun scheduleNextRefresh(context: Context) {
         val now = timeProvider.now()
-        val tomorrow = now.toLocalDate().plusDays(1).atStartOfDay().plusSeconds(5)
-        val delay = Duration.between(now, tomorrow).toMillis()
+        val evening = now.toLocalDate().atStartOfDay().plusHours(18)
+        val delay = Duration.between(now, evening).toMinutes()
 
-        var work = PeriodicWorkRequestBuilder<iCalRefreshWorker>(1, TimeUnit.DAYS)
-            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+        var work = OneTimeWorkRequestBuilder<iCalRefreshWorker>()
+            .setInitialDelay(delay, TimeUnit.MINUTES)
             .addTag("com.iceiony.visualcalendar")
             .build()
 
         WorkManager.getInstance(context)
-            .enqueueUniquePeriodicWork(
-                "iCalDataProvider.refresh()",
-                androidx.work.ExistingPeriodicWorkPolicy.REPLACE,
-                work
-            )
+            .enqueue( work )
     }
 
 

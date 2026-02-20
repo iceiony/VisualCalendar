@@ -69,10 +69,10 @@ class iCalDataProviderTest {
     }
 
     @Test
-    fun `can get next day's events after time passes midnight`() {
+    fun `can get tomorrow's events after 6pm`() {
         val testScheduler = TestScheduler()
         val timeProvider = TestTimeProvider(
-            now = LocalDateTime.of(2025, 6, 26, 7, 10),
+            now = LocalDateTime.of(2025, 6, 26, 6, 30), //i.e. 6:30 AM
             scheduler = testScheduler,
             context = context
         )
@@ -85,12 +85,12 @@ class iCalDataProviderTest {
 
         events.values().clear()
 
-        timeProvider.advanceTimeBy( 60 * 60 * 12)      // Advance by half a day
+        timeProvider.advanceTimeBy( 60 * 60 * 11) // 17:30:00
         assert(events.values().isEmpty()) {
             "Expected next days' events to not have been published yet."
         }
 
-        timeProvider.advanceTimeBy( 60 * 60 * 12 + 10) // Advance by half a day
+        timeProvider.advanceTimeBy( 60 * 30 + 1 ) // 18:00:01
         assert(events.values().isNotEmpty()) {
             "Expected to find next day's events but found none."
         }
