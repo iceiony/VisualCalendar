@@ -45,19 +45,35 @@ class CalendarDayViewTest {
     fun tearDown() { }
 
     @Test
-    fun test_initializes_successfully_for_todays_date_and_time() {
-        composeTestRule.setContent { CalendarDayView() }
+    fun `shows today's day name when before 6pm`() {
+        val timeProvider = PreviewTimeProvider(
+            now = LocalDateTime.of(2025, 6, 26, 7, 10)
+        )
 
-        val today = java.time.LocalDateTime.now()
-        val tomorrow = java.time.LocalDateTime.now().toLocalDate().atStartOfDay().plusDays(1)
-
-        //if before 6pm
-        if(today.hour < 18) {
-            composeTestRule.onNodeWithText("It's ${today.dayOfWeek.name}").assertExists()
-        } else {
-            composeTestRule.onNodeWithText("Tomorrow is ${tomorrow.dayOfWeek.name}").assertExists()
+        composeTestRule.setContent {
+            CalendarDayView( timeProvider = timeProvider )
         }
+
+        val today = timeProvider.now()
+
+        composeTestRule.onNodeWithText("It's ${today.dayOfWeek.name}").assertExists()
     }
+
+    @Test
+    fun `shows tomorrow's day name when after 6pm`() {
+        val timeProvider = PreviewTimeProvider(
+            now = LocalDateTime.of(2025, 6, 26, 18, 0,1)
+        )
+
+        composeTestRule.setContent {
+            CalendarDayView( timeProvider = timeProvider )
+        }
+
+        val tomorrow = timeProvider.now().toLocalDate().atStartOfDay().plusDays(1)
+
+        composeTestRule.onNodeWithText("Tomorrow is ${tomorrow.dayOfWeek.name}").assertExists()
+    }
+
 
     @Test
     fun test_shows_days_events(){
