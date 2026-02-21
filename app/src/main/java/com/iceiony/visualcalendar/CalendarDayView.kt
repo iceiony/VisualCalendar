@@ -57,6 +57,8 @@ fun CalendarDayView(
         "Tomorrow is " + tomorrow.dayOfWeek.name
     }
 
+    val colour = if ("Tomorrow" in title) R.color.title_orange else R.color.title_teal
+
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 2.dp)
     ) {
@@ -64,7 +66,7 @@ fun CalendarDayView(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = colorResource(id = R.color.teal_200).copy(alpha = 0.9f),
+                    color = colorResource(id = colour).copy(alpha = 0.9f),
                     shape = RoundedCornerShape(8.dp)
                 )
         ) {
