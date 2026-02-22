@@ -15,7 +15,7 @@ import java.util.Date
 
 interface DataProvider {
     fun today(context: Context): Observable<List<VEvent>>
-    fun refresh()
+    fun refresh(now: LocalDateTime)
 }
 
 

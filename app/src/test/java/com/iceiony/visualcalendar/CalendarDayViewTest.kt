@@ -156,5 +156,40 @@ class CalendarDayViewTest {
         composeTestRule.onNodeWithText("Test Day 2").assertExists()
     }
 
+    @Test
+    fun `test evening title gets updated to morning title` () {
+        val this_evening    = LocalDateTime.of(2025, 6, 26, 18, 10)
+        val tomorrow_morning = this_evening.toLocalDate().atStartOfDay().plusDays(1).plusHours(6)
+
+        val timeProvider = PreviewTimeProvider( now = this_evening )
+
+        val dataProvider = PreviewDataProvider(
+            listOf(
+                listOf(
+                    PreviewDataProvider.calendarEvent(
+                        "Friday event 1",
+                        tomorrow_morning.plusHours(5).plusMinutes(20),
+                        tomorrow_morning.plusHours(6),
+                    )
+                )
+            )
+        )
+
+        composeTestRule.setContent {
+            CalendarDayView(
+                dataProvider = dataProvider,
+                timeProvider = timeProvider
+            )
+        }
+
+        composeTestRule.onNodeWithText("Tomorrow is FRIDAY").assertExists()
+        composeTestRule.onNodeWithText("Friday event 1").assertExists()
+
+        timeProvider.advanceTimeTo(tomorrow_morning)
+        dataProvider.refresh(timeProvider.now())
+
+        composeTestRule.onNodeWithText("It's FRIDAY").assertExists()
+        composeTestRule.onNodeWithText("Friday event 1").assertExists()
+    }
 }
 

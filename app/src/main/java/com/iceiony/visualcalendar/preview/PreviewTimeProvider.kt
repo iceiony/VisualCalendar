@@ -19,6 +19,10 @@ open class PreviewTimeProvider(
     open fun advanceTimeBy(seconds : Long) {
         now = now.plusSeconds(seconds)
         scheduler.advanceTimeBy(seconds, TimeUnit.SECONDS)
+    }
 
+    open fun advanceTimeTo(newTime: LocalDateTime) {
+        val secondsToAdvance = java.time.Duration.between(now, newTime).seconds
+        advanceTimeBy(secondsToAdvance)
     }
 }

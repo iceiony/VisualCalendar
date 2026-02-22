@@ -51,7 +51,7 @@ class PreviewDataProvider(
         return subject.hide();
     }
 
-    override fun refresh() {
+    override fun refresh(now : LocalDateTime) {
         subject.onNext(testEvents.getOrNull(idx) ?: emptyList())
     }
 }

@@ -20,6 +20,8 @@ class TestTimeProvider(
     private var testDriver: TestDriver = WorkManagerTestInitHelper.getTestDriver(context)!!
 
     override fun advanceTimeBy(seconds : Long) {
+        super.advanceTimeBy(seconds)
+
         totalTimePassedMillis += seconds * 1000
         val workInfos = workManager.getWorkInfosByTag("com.iceiony.visualcalendar").get()
         for (workInfo in workInfos) {
@@ -29,7 +31,7 @@ class TestTimeProvider(
             }
         }
 
-        super.advanceTimeBy(seconds)
+        super.advanceTimeBy(0)
     }
 
 }

@@ -43,7 +43,7 @@ class iCalDataProviderTest {
     fun `can subscribe to today's events successfully`() {
         val testScheduler = TestScheduler()
         val timeProvider = TestTimeProvider(
-            now = LocalDateTime.of(2025, 6, 26, 7, 10),
+            now = LocalDateTime.of(2026, 2, 21, 7, 10),
             scheduler = testScheduler,
             context = context
         )
@@ -52,13 +52,18 @@ class iCalDataProviderTest {
 
         timeProvider.advanceTimeBy(0)
 
-        var events = dataProvider.today(context).test()
+        val events = dataProvider.today(context).test()
 
         assert(events.values().isNotEmpty()) {
-            "Expected to find events for today, but found none."
+            "Expected to have published today's events, but nothing was published."
         }
-        var dayStart = java.time.LocalDate.of(2025, 6, 26).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-        var dayEnd   = java.time.LocalDate.of(2025, 6, 27).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+
+        assert(events.values().last().isNotEmpty()) {
+            "Expected to find some events for the day, but found none."
+        }
+
+        val dayStart = java.time.LocalDate.of(2026, 2, 21).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+        val dayEnd   = java.time.LocalDate.of(2026, 2, 22).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
 
         assert(events.values().first().all { event ->
             val start = event.dateStart.value.toInstant()
@@ -69,10 +74,10 @@ class iCalDataProviderTest {
     }
 
     @Test
-    fun `can get tomorrow's events after 6pm`() {
+    fun `will get tomorrow's events after 6pm`() {
         val testScheduler = TestScheduler()
         val timeProvider = TestTimeProvider(
-            now = LocalDateTime.of(2025, 6, 26, 6, 30), //i.e. 6:30 AM
+            now = LocalDateTime.of(2026, 2, 20, 17, 30),
             scheduler = testScheduler,
             context = context
         )
@@ -81,30 +86,89 @@ class iCalDataProviderTest {
 
         timeProvider.advanceTimeBy(0)
 
-        var events = dataProvider.today(context).test()
+        val events = dataProvider.today(context).test()
 
-        events.values().clear()
-
-        timeProvider.advanceTimeBy( 60 * 60 * 11) // 17:30:00
-        assert(events.values().isEmpty()) {
-            "Expected next days' events to not have been published yet."
+        assert(events.values().last().isEmpty()) {
+            "Not expecting any events for the day. Test not setup correctly."
         }
 
-        timeProvider.advanceTimeBy( 60 * 30 + 1 ) // 18:00:01
+        timeProvider.advanceTimeBy( 60 * 30 + 1) // 18:00:01
+
+        assert(events.values().last().isNotEmpty()) {
+            "Expected next days' events to have been published."
+        }
+
+        val dayStart = java.time.LocalDate.of(2026, 2, 21).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+        val dayEnd   = java.time.LocalDate.of(2026, 2, 22).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+
+        assert(events.values().last().all { event ->
+            val start = event.dateStart.value.toInstant()
+            start.isAfter(dayStart) && start.isBefore(dayEnd)
+        }) {
+            "All events should be within next day's date range."
+        }
+    }
+
+    @Test
+    fun `the event list is refreshed in the morning`() {
+        val testScheduler = TestScheduler()
+        val timeProvider = TestTimeProvider(
+            now = LocalDateTime.of(2026, 2, 20, 18, 1),
+            scheduler = testScheduler,
+            context = context
+        )
+
+        val dataProvider = iCalDataProvider(timeProvider, testScheduler)
+
+        timeProvider.advanceTimeBy(0)
+
+        val eventsSource = dataProvider.today(context)
+
+        val events = eventsSource.test()
+        val eventTime = eventsSource.map { timeProvider.now() }.test()
+
         assert(events.values().isNotEmpty()) {
+            "Expected to have events published, but nothing was published."
+        }
+
+        val eventsYesterday = events.values().last()
+        val timeYesterday   = eventTime.values().last()
+
+        assert(eventsYesterday.isNotEmpty()) {
             "Expected to find next day's events but found none."
         }
 
-        val dayStart = java.time.LocalDate.of(2025, 6, 27).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-        val dayEnd   = java.time.LocalDate.of(2025, 6, 28).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+        val dayStart = java.time.LocalDate.of(2026, 2, 21).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+        val dayEnd   = java.time.LocalDate.of(2026, 2, 22).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
 
-        assert(events.values().first().all { event ->
+        assert(eventsYesterday.all { event ->
             val start = event.dateStart.value.toInstant()
             start.isAfter(dayStart) && start.isBefore(dayEnd)
         }) {
             "All events should be within next day's date range."
         }
 
+        timeProvider.advanceTimeTo(
+            LocalDateTime.of(2026, 2, 21, 6, 0, 1)
+        )
+
+        val eventsToday = events.values().last()
+        val timeToday   = eventTime.values().last()
+
+        assert( timeToday != timeYesterday) {
+            "Expected time to have advanced."
+        }
+
+        assert(eventsYesterday.size == eventsToday.size) {
+            "Expected to have same number of events after refresh, but had ${eventsYesterday.size} before and ${eventsToday.size} after."
+        }
+
+        assert(eventsToday.all { event ->
+            val start = event.dateStart.value.toInstant()
+            start.isAfter(dayStart) && start.isBefore(dayEnd)
+        }) {
+            "All events should still be within next day's date range."
+        }
 
     }
 }

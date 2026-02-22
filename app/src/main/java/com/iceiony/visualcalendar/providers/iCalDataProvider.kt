@@ -2,7 +2,6 @@ package com.iceiony.visualcalendar.providers
 
 import android.content.Context
 import android.annotation.SuppressLint
-import androidx.work.PeriodicWorkRequestBuilder
 import biweekly.Biweekly
 import biweekly.component.VEvent
 import com.iceiony.visualcalendar.BuildConfig
@@ -48,10 +47,15 @@ class iCalDataProvider(
 
         _instance = this
 
-        refresh()
+        val now = timeProvider.now()
+        if (now.hour < 18) {
+            refresh(now)
+        } else {
+            refresh(now.plusDays(1))
+        }
     }
 
-    fun getTodaysEvents(now: LocalDateTime): List<VEvent> {
+    fun getDaysEvents(now: LocalDateTime): List<VEvent> {
         val request = Request.Builder().url(iCalUrl).get().build()
         val response = client.newCall(request).execute()
 
@@ -68,10 +72,9 @@ class iCalDataProvider(
         }
     }
 
-    override fun refresh() {
-        val now = timeProvider.now()
+    override fun refresh(now: LocalDateTime) {
         Observable
-            .fromCallable{ getTodaysEvents(now) }
+            .fromCallable{ getDaysEvents(now) }
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .subscribe(
@@ -93,7 +96,15 @@ class iCalDataProvider(
 
         override suspend fun doWork(): Result {
             try {
-                _instance.refresh()
+                val timeProvider = _instance.timeProvider
+
+                val now = timeProvider.now()
+                if(now.hour < 18) {
+                    _instance.refresh(now)
+                } else {
+                    _instance.refresh(now.plusDays(1))
+                }
+
                 _instance.scheduleNextRefresh(applicationContext)
 
                 return Result.success()
@@ -107,16 +118,21 @@ class iCalDataProvider(
 
     fun scheduleNextRefresh(context: Context) {
         val now = timeProvider.now()
-        val evening = now.toLocalDate().atStartOfDay().plusHours(18)
-        val delay = Duration.between(now, evening).toMinutes()
+        val thisEvening = now.toLocalDate().atStartOfDay().plusHours(18)
+        val nextMorning = now.toLocalDate().atStartOfDay().plusDays(1).plusHours(6)
 
-        var work = OneTimeWorkRequestBuilder<iCalRefreshWorker>()
+        val delay = if(now < thisEvening) {
+            Duration.between(now, thisEvening).toMinutes()
+        } else {
+            Duration.between(now, nextMorning).toMinutes()
+        }
+
+        val work = OneTimeWorkRequestBuilder<iCalRefreshWorker>()
             .setInitialDelay(delay, TimeUnit.MINUTES)
             .addTag("com.iceiony.visualcalendar")
             .build()
 
-        WorkManager.getInstance(context)
-            .enqueue( work )
+        WorkManager.getInstance(context).enqueue( work )
     }
 
 

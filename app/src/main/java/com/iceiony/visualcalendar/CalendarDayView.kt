@@ -31,6 +31,8 @@ import com.iceiony.visualcalendar.preview.PreviewTimeProvider
 import com.iceiony.visualcalendar.providers.DataProvider
 import com.iceiony.visualcalendar.providers.iCalDataProvider
 import com.iceiony.visualcalendar.providers.toTime
+import kotlinx.coroutines.channels.ticker
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.rx3.asFlow
 import java.time.LocalDateTime
 import kotlin.concurrent.timer
@@ -47,13 +49,17 @@ fun CalendarDayView(
         dataProvider.today(context).asFlow()
     }
 
+    val timeFlow = remember(dataProvider) {
+        eventsFlow.map { events -> timeProvider.now() }
+    }
+
     val events by eventsFlow.collectAsState(initial = emptyList())
+    val now by timeFlow.collectAsState(initial = timeProvider.now())
 
     val title = if(timeProvider.now().hour < 18) {
-        val today = timeProvider.now().toLocalDate()
-        "It's " + today.dayOfWeek.name
+        "It's " + now.toLocalDate().dayOfWeek.name
     } else {
-        val tomorrow =  timeProvider.now().toLocalDate().atStartOfDay().plusDays(1)
+        val tomorrow =  now.toLocalDate().atStartOfDay().plusDays(1)
         "Tomorrow is " + tomorrow.dayOfWeek.name
     }
 
