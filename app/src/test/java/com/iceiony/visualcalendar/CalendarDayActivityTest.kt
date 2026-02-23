@@ -87,8 +87,14 @@ class CalendarDayActivityTest {
 
             assert(calendarDayView != null) { "Activity should contain a composable view" }
 
-            val today = java.time.LocalDate.now()
-            composeTestRule.onNodeWithText("It's " + today.dayOfWeek.name).assertExists()
+            val today = java.time.LocalDateTime.now()
+            if(today.hour < 18){
+                // If it's before 6pm, the calendar should show the current day
+                composeTestRule.onNodeWithText("It's " + today.dayOfWeek.name).assertExists()
+            } else {
+                // If it's after 6pm, the calendar should show the next day
+                composeTestRule.onNodeWithText("Tomorrow is " + today.plusDays(1).dayOfWeek.name).assertExists()
+            }
         }
     }
 

@@ -17,6 +17,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDateTime
+import java.util.concurrent.TimeUnit
 
 
 @RunWith(RobolectricTestRunner::class)
@@ -40,7 +41,22 @@ class iCalDataProviderTest {
     fun tearDown() { }
 
     @Test
-    fun `can subscribe to today's events successfully`() {
+    fun `can subscribe to calendar events`() {
+        val testScheduler = TestScheduler()
+        val dataProvider = iCalDataProvider(scheduler = testScheduler)
+
+        val eventsStream = dataProvider.today(context).test()
+
+        testScheduler.advanceTimeBy(0, TimeUnit.SECONDS)
+
+        println("Events for today:")
+        eventsStream.values().last().forEach { event ->
+            println("- ${event.summary.value} at ${event.dateStart.value} - ${event.dateEnd.value}")
+        }
+    }
+
+    @Test
+    fun `can get today's events before 6pm`() {
         val testScheduler = TestScheduler()
         val timeProvider = TestTimeProvider(
             now = LocalDateTime.of(2026, 2, 21, 7, 10),
@@ -74,7 +90,7 @@ class iCalDataProviderTest {
     }
 
     @Test
-    fun `will get tomorrow's events after 6pm`() {
+    fun `can get tomorrow's events after 6pm`() {
         val testScheduler = TestScheduler()
         val timeProvider = TestTimeProvider(
             now = LocalDateTime.of(2026, 2, 20, 17, 30),
@@ -170,5 +186,35 @@ class iCalDataProviderTest {
             "All events should still be within next day's date range."
         }
 
+    }
+
+    @Test
+    fun `re-occurring calendar events show up`() {
+        val testScheduler = TestScheduler()
+        val timeProvider = TestTimeProvider(
+            now = LocalDateTime.of(2026, 2, 23, 19, 7),
+            scheduler = testScheduler,
+            context = context
+        )
+
+        val dataProvider = iCalDataProvider(timeProvider, testScheduler)
+
+        timeProvider.advanceTimeBy(0)
+
+        val events = dataProvider.today(context).test()
+
+        assert(events.values().last().isNotEmpty()) {
+            "Expected next days' events to have been published."
+        }
+
+        val dayStart = java.time.LocalDate.of(2026, 2, 24).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+        val dayEnd   = java.time.LocalDate.of(2026, 2, 25).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+
+        assert(events.values().last().all { event ->
+            val start = event.dateStart.value.toInstant()
+            start.isAfter(dayStart) && start.isBefore(dayEnd)
+        }) {
+            "All events should be within next day's date range."
+        }
     }
 }

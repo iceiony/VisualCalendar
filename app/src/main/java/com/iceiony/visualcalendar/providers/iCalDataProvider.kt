@@ -22,6 +22,11 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import android.util.Log
 import androidx.work.OneTimeWorkRequestBuilder
+import biweekly.util.ICalDate
+import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Date
+import java.util.TimeZone
 
 @SuppressLint("CheckResult")
 class iCalDataProvider(
@@ -63,13 +68,43 @@ class iCalDataProvider(
         val calendar = Biweekly.parse(body).first()           // parse to ICalendar
             ?: throw IllegalStateException("Invalid ICS feed")
 
-        val today = now.toLocalDate().atStartOfDay().toInstant(ZoneOffset.UTC)
-        val tomorrow = now.toLocalDate().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
+        val today = now
+            .toLocalDate()
+            .atStartOfDay()
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
 
-        return calendar.events.filter() { event ->
-            event.dateStart.value.toInstant().isAfter(today) &&
-            event.dateStart.value.toInstant().isBefore(tomorrow)
+        val tomorrow = now
+            .toLocalDate()
+            .plusDays(1)
+            .atStartOfDay()
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+
+        val oneOffEvents =  calendar.events.filter() { event ->
+            val start = event.dateStart.value.toInstant()
+            start.isAfter(today) && start.isBefore(tomorrow)
         }
+
+        val reoccurringEvents = calendar.events.filter() {
+            it.recurrenceRule != null
+        }.map { event ->
+            val nextDates = event.getDateIterator(TimeZone.getDefault())
+
+            while(nextDates.hasNext()) {
+                val date = nextDates.next()
+                if(date.toInstant().isBefore(today)) continue
+                if(date.toInstant().isAfter(tomorrow)) break
+
+                event.setDateEnd( Date(date.time + (event.dateEnd.value.time - event.dateStart.value.time)) )
+                event.setDateStart(date)
+
+                return@map event
+            }
+            return@map null
+        }.filterNotNull()
+
+        return  (oneOffEvents + reoccurringEvents).sortedBy { it.dateStart.value }
     }
 
     override fun refresh(now: LocalDateTime) {
