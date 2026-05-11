@@ -37,7 +37,7 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun test_requests_overlay_permissions_when_not_granted() {
+    fun `requests overlay permissions when not granted`() {
         ShadowSettings.setCanDrawOverlays(false)
         ActivityScenario.launch(OnboardingActivity::class.java)
 
@@ -51,7 +51,7 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun test_creates_toast_when_overlay_permission_not_granted() {
+    fun `creates toast when overlay permission not granted`() {
         ShadowSettings.setCanDrawOverlays(false)
         ShadowSettings.reset()
 
@@ -70,7 +70,7 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun test_requests_accessibility_when_overlay_already_granted_but_not_accessibility() {
+    fun `requests accessibility when overlay already granted but not accessibility`() {
         ShadowSettings.setCanDrawOverlays(true)
         ActivityScenario.launch(OnboardingActivity::class.java)
         intended(hasAction(Settings.ACTION_MANAGE_OVERLAY_PERMISSION), Intents.times(0))
@@ -79,7 +79,7 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun test_does_not_open_accessibility_settings_when_already_granted() {
+    fun `does not open accessibility settings when already granted`() {
         ShadowSettings.setCanDrawOverlays(true)
 
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -96,7 +96,7 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun test_opens_CalendarActivity_when_permissions_are_already_granted(){
+    fun `opens CalendarActivity when permissions are already granted`(){
         ShadowSettings.setCanDrawOverlays(true)
 
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -116,7 +116,7 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun test_finishes_the_activity_when_all_permissions_granted() {
+    fun `finishes the activity when all permissions granted`() {
         ShadowSettings.setCanDrawOverlays(false)
         ShadowSettings.reset()
 

@@ -117,6 +117,12 @@ fun CalendarDayView(
 
     LaunchedEffect(Unit) {
     }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            dataProvider.dispose()
+        }
+    }
 }
 
 @Preview()

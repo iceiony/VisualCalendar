@@ -35,7 +35,7 @@ class PreviewDataProvider(
     }
 
     private var idx = -1
-    private val subject = ReplaySubject.create<List<VEvent>>(1)
+    val subject = ReplaySubject.create<List<VEvent>>(1)
 
     init {
         idx++
@@ -48,11 +48,15 @@ class PreviewDataProvider(
     }
 
     override fun today(context : Context): Observable<List<VEvent>> {
-        return subject.hide();
+        return subject.hide()
     }
 
     override fun refresh(now : LocalDateTime) {
         subject.onNext(testEvents.getOrNull(idx) ?: emptyList())
+    }
+
+    override fun dispose() {
+        subject.onComplete()
     }
 }
 
