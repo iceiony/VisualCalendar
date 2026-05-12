@@ -1,5 +1,3 @@
-import org.gradle.api.internal.changedetection.changes.DefaultTaskExecutionMode.incremental
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -14,12 +12,11 @@ secrets {
 
 android {
     namespace = "com.iceiony.visualcalendar"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.iceiony.visualcalendar"
         minSdk = 30
-        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -56,24 +53,29 @@ android {
 }
 
 dependencies {
-    implementation("androidx.compose.runtime:runtime:1.8.3")
-    implementation("androidx.compose.ui:ui:1.8.3")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.8.3")
-    implementation("androidx.compose.material3:material3:1.3.2")
-    implementation("androidx.activity:activity-compose:1.10.1")
+    implementation(libs.google.tink.android)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.datastore.preferences.rxjava3) // only if using RxJava
+    implementation(libs.androidx.security.crypto.ktx)
 
-    implementation("io.reactivex.rxjava3:rxjava:3.1.10")
-    implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
-    implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.10.2")
+    implementation(libs.androidx.runtime)
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.activity.compose)
 
-    implementation("androidx.work:work-runtime:2.10.2")
-    implementation("androidx.work:work-runtime-ktx:2.10.2")
+    implementation(libs.rxjava)
+    implementation(libs.rxkotlin)
+    implementation(libs.rxandroid)
+    implementation(libs.kotlinx.coroutines.rx3)
 
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("net.sf.biweekly:biweekly:0.6.8")
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.work.runtime.ktx)
 
-    implementation("com.google.android.material:material:1.12.0")
+    implementation(libs.okhttp)
+    implementation(libs.biweekly)
+
+    implementation(libs.material.v1130)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -83,16 +85,17 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.espresso.intents)
     implementation(libs.androidx.ui.test.junit4.android)
+    implementation(libs.androidx.datastore.tink)
 
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.14")
-    testImplementation("androidx.compose.ui:ui-test-junit4:1.8.3")
-    testImplementation("androidx.work:work-testing:2.10.2")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.8.3")
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.androidx.work.testing)
+    debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation("androidx.test.espresso:espresso-intents:3.6.1")
-    androidTestImplementation("androidx.work:work-testing:2.10.2")
+    androidTestImplementation(libs.androidx.espresso.intents)
+    androidTestImplementation(libs.androidx.work.testing)
 }
