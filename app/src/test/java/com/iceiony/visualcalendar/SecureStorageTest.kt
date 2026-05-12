@@ -52,4 +52,21 @@ class SecureStorageTest {
         println("Decrypted value for non-existent key: $retrievedValue")
         assert(retrievedValue == null)
     }
+
+    @Test
+    fun `can not retrieve deleted key`() = runTest {
+        val storage = SecureStorage(context)
+        val key = "temp_key"
+        val value = "Temporary Value"
+
+        storage.saveValue(key, value)
+
+        storage.deleteValue(key)
+
+        val retrievedValue = storage.getValue(key).first()
+
+        println("Decrypted value after deletion: $retrievedValue")
+        assert(retrievedValue == null)
+    }
+
 }

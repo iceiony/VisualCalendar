@@ -10,30 +10,30 @@ import com.google.crypto.tink.integration.android.AndroidKeysetManager
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.crypto.tink.aead.AeadConfig
+import com.iceiony.visualcalendar.VisualCalendarApp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class SecureStorage(private val context: Context) {
+class SecureStorage(
+    private val context: Context = VisualCalendarApp.instance.applicationContext
+) {
     init {
         AeadConfig.register()
     }
 
-    val keysetHandle = AndroidKeysetManager.Builder()
+    private val keysetHandle = AndroidKeysetManager.Builder()
         .withSharedPref(context, "master_keyset", "my_pref")
         .withKeyTemplate(AesGcmKeyManager.aes256GcmTemplate())
         .withMasterKeyUri("android-keystore://master_key")
         .build()
         .keysetHandle
 
-    val aead = keysetHandle.getPrimitive(
+    private val aead = keysetHandle.getPrimitive(
         RegistryConfiguration.get(),
         Aead::class.java
     )
 
-
     private val Context.dataStore by preferencesDataStore("secure_store")
-
-    private val KEY_ACCESS_TOKEN = stringPreferencesKey("access_token")
 
     suspend fun saveValue(name: String, value: String) {
         val key = stringPreferencesKey(name)
@@ -52,6 +52,13 @@ class SecureStorage(private val context: Context) {
                     aead.decrypt(encryptedBytes, null).toString(Charsets.UTF_8)
                 }
             }
+    }
+
+    suspend fun deleteValue(name: String) {
+        val key = stringPreferencesKey(name)
+        context.dataStore.edit { prefs ->
+            prefs.remove(key)
+        }
     }
 
 }
