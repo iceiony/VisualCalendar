@@ -12,6 +12,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.crypto.tink.aead.AeadConfig
 import com.iceiony.visualcalendar.VisualCalendarApp
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class SecureStorage(
@@ -43,15 +44,13 @@ class SecureStorage(
         }
     }
 
-    fun getValue(name: String): Flow<String?> {
+    suspend fun getValue(name: String): String? {
         val key = stringPreferencesKey(name)
-        return context.dataStore.data
-            .map { prefs ->
-                prefs[key]?.let {
-                    val encryptedBytes = Base64.decode(it, Base64.DEFAULT)
-                    aead.decrypt(encryptedBytes, null).toString(Charsets.UTF_8)
-                }
-            }
+        val prefs = context.dataStore.data.first()
+        return prefs[key]?.let {
+            val encryptedBytes = Base64.decode(it, Base64.DEFAULT)
+            aead.decrypt(encryptedBytes, null).toString(Charsets.UTF_8)
+        }
     }
 
     suspend fun deleteValue(name: String) {

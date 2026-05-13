@@ -35,7 +35,7 @@ class SecureStorageTest {
         val value = "Hello, Secure Storage!"
 
         storage.saveValue(key, value)
-        val retrievedValue = storage.getValue(key).first()
+        val retrievedValue = storage.getValue(key)
 
         println("Decrypted value: $retrievedValue")
         assert(retrievedValue == value)
@@ -47,7 +47,7 @@ class SecureStorageTest {
 
         val key = "non_existent_key"
 
-        val retrievedValue = storage.getValue(key).first()
+        val retrievedValue = storage.getValue(key)
 
         println("Decrypted value for non-existent key: $retrievedValue")
         assert(retrievedValue == null)
@@ -63,7 +63,7 @@ class SecureStorageTest {
 
         storage.deleteValue(key)
 
-        val retrievedValue = storage.getValue(key).first()
+        val retrievedValue = storage.getValue(key)
 
         println("Decrypted value after deletion: $retrievedValue")
         assert(retrievedValue == null)
