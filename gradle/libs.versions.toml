@@ -2,6 +2,7 @@
 activityCompose = "1.13.0"
 agp = "9.0.1"
 biweekly = "0.6.8"
+zxing= "3.5.4"
 datastorePreferences = "1.1.1"
 datastorePreferencesRxjava3 = "1.1.1"
 kotlin = "2.2.10"
@@ -50,6 +51,7 @@ androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version
 androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "workRuntime" }
 androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "workRuntime" }
 biweekly = { module = "net.sf.biweekly:biweekly", version.ref = "biweekly" }
+zxing = { module = "com.google.zxing:core", version.ref = "zxing" }
 datastore-preferences-rxjava3 = { module = "androidx.datastore:datastore-preferences-rxjava3", version.ref = "datastorePreferencesRxjava3" }
 google-tink-android = { module = "com.google.crypto.tink:tink-android", version.ref = "tinkAndroidVersion" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

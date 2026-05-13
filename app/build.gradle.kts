@@ -58,6 +58,8 @@ dependencies {
     implementation(libs.datastore.preferences.rxjava3) // only if using RxJava
     implementation(libs.androidx.security.crypto.ktx)
 
+    implementation(libs.zxing)
+
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.tooling.preview)

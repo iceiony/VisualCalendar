@@ -9,6 +9,7 @@ import okhttp3.OkHttpClient
 import java.time.Duration
 import androidx.core.content.edit
 import com.iceiony.visualcalendar.BuildConfig
+import com.iceiony.visualcalendar.providers.AuthProvidier
 import okhttp3.FormBody
 import okhttp3.Request
 import org.json.JSONObject
@@ -16,22 +17,15 @@ import org.json.JSONObject
 class GoogleAuthProvider(
     private val context: Context = VisualCalendarApp.instance.applicationContext,
     private val secureStorage: SecureStorage = SecureStorage(context)
-) {
+) : AuthProvidier {
     private val prefs = context.getSharedPreferences("google_auth", Context.MODE_PRIVATE)
 
     private val client = OkHttpClient.Builder()
         .callTimeout(Duration.ofSeconds(30))
         .build()
 
-    data class DeviceCodeInfo(
-        val deviceCode: String,
-        val userCode: String,
-        val verificationUrl: String,
-        val intervalSeconds: Int,
-    )
 
-
-    suspend fun requestDeviceCode(): DeviceCodeInfo {
+    override suspend fun requestDeviceCode(): AuthProvidier.DeviceCodeInfo {
         val response = client.newCall(
             Request.Builder()
                 .url("https://oauth2.googleapis.com/device/code")
@@ -46,7 +40,7 @@ class GoogleAuthProvider(
 
         val json = JSONObject(response.body?.string() ?: throw Exception("Empty device code response"))
 
-        return DeviceCodeInfo(
+        return AuthProvidier.DeviceCodeInfo(
             deviceCode = json.getString("device_code"),
             userCode = json.getString("user_code"),
             verificationUrl = json.getString("verification_url"),
