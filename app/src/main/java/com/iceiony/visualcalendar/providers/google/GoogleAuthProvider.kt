@@ -7,6 +7,11 @@ import com.iceiony.visualcalendar.VisualCalendarApp
 import com.iceiony.visualcalendar.local_storage.SecureStorage
 import okhttp3.OkHttpClient
 import java.time.Duration
+import androidx.core.content.edit
+import com.iceiony.visualcalendar.BuildConfig
+import okhttp3.FormBody
+import okhttp3.Request
+import org.json.JSONObject
 
 class GoogleAuthProvider(
     private val context: Context = VisualCalendarApp.instance.applicationContext,
@@ -24,6 +29,30 @@ class GoogleAuthProvider(
         val verificationUrl: String,
         val intervalSeconds: Int,
     )
+
+
+    suspend fun requestDeviceCode(): DeviceCodeInfo {
+        val response = client.newCall(
+            Request.Builder()
+                .url("https://oauth2.googleapis.com/device/code")
+                .post(
+                    FormBody.Builder()
+                        .add("client_id", BuildConfig.GOOGLE_CLIENT_ID)
+                        .add("scope", "https://www.googleapis.com/auth/calendar.readonly")
+                        .build()
+                )
+                .build()
+        ).execute()
+
+        val json = JSONObject(response.body?.string() ?: throw Exception("Empty device code response"))
+
+        return DeviceCodeInfo(
+            deviceCode = json.getString("device_code"),
+            userCode = json.getString("user_code"),
+            verificationUrl = json.getString("verification_url"),
+            intervalSeconds = json.getInt("interval"),
+        )
+    }
 
     suspend fun getValidAccessToken(): String? {
         //check if expiry token exists
@@ -50,7 +79,7 @@ class GoogleAuthProvider(
     }
 
     suspend fun clearAuthState() {
-        prefs.edit().clear().apply()
+        prefs.edit { clear() }
         secureStorage.deleteValue("access_token")
         secureStorage.deleteValue("refresh_token")
     }

@@ -33,7 +33,7 @@ class GoogleAuthProviderTest {
     }
 
     @Test
-    fun `launches an GoogleAuth activity when no refresh token exist`() = runTest {
+    fun `launches an Onboarding activity when no refresh token exist`() = runTest {
         val authProvider = GoogleAuthProvider(context)
 
         authProvider.clearAuthState() // Ensure no tokens are stored
@@ -43,5 +43,17 @@ class GoogleAuthProviderTest {
         assert(token == null) // Should return null since no token is available
 
         intended(hasComponent(OnboardingActivity::class.java.name))
+    }
+
+    @Test
+    fun `can request device code`() = runTest {
+        val authProvider = GoogleAuthProvider(context)
+
+        val deviceCodeInfo = authProvider.requestDeviceCode()
+
+        assert(deviceCodeInfo.deviceCode.isNotEmpty())
+        assert(deviceCodeInfo.userCode.isNotEmpty())
+        assert(deviceCodeInfo.verificationUrl.isNotEmpty())
+        assert(deviceCodeInfo.intervalSeconds > 0)
     }
 }
