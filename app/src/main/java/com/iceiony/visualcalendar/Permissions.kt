@@ -27,4 +27,10 @@ object Permissions {
         return enabledServices.contains(context.packageName)
     }
 
+    fun isCalendarAccessGranted(context: Context): Boolean {
+        return context
+            .getSharedPreferences("google_auth", Context.MODE_PRIVATE)
+            .contains("calendar_id")
+    }
+
 }

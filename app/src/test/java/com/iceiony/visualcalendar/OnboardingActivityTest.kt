@@ -2,6 +2,7 @@ package com.iceiony.visualcalendar
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.result.ActivityResult
@@ -16,6 +17,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
 import org.robolectric.shadows.ShadowToast
@@ -96,7 +99,7 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun `opens CalendarActivity when permissions are already granted`(){
+    fun `opens CalendarDayActivity when permissions are already granted`() {
         ShadowSettings.setCanDrawOverlays(true)
 
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -113,6 +116,7 @@ class OnboardingActivityTest {
         assert(mainActivity.result.resultCode in intArrayOf(Activity.RESULT_OK, Activity.RESULT_CANCELED)) {
             "Expected OnboardingActivity finishes as soon as created if all permissions had been granted"
         }
+
     }
 
     @Test

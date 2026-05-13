@@ -8,8 +8,10 @@ import com.iceiony.visualcalendar.SystemTimeProvider
 import com.iceiony.visualcalendar.TimeProvider
 import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.schedulers.Schedulers
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.Date

@@ -7,7 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
-import com.iceiony.visualcalendar.providers.GoogleCalendarDataProvider
+import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.TestTimeProvider
 import io.reactivex.rxjava3.schedulers.TestScheduler
 import org.junit.After
@@ -43,7 +43,7 @@ class GoogleCalendarDataProviderTest {
     @Test
     fun `can subscribe to calendar events`() {
         val testScheduler = TestScheduler()
-        val dataProvider = GoogleCalendarDataProvider(scheduler = testScheduler)
+        val dataProvider = GoogleCalendarDataProvider(context, scheduler = testScheduler)
 
         val eventsStream = dataProvider.today(context).test()
 
@@ -64,7 +64,7 @@ class GoogleCalendarDataProviderTest {
             context = context
         )
 
-        val dataProvider = GoogleCalendarDataProvider(timeProvider, testScheduler)
+        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, testScheduler)
 
         timeProvider.advanceTimeBy(0)
 
@@ -98,7 +98,7 @@ class GoogleCalendarDataProviderTest {
             context = context
         )
 
-        val dataProvider = GoogleCalendarDataProvider(timeProvider, testScheduler)
+        val dataProvider = GoogleCalendarDataProvider(context,timeProvider, testScheduler)
 
         timeProvider.advanceTimeBy(0)
 
@@ -134,7 +134,7 @@ class GoogleCalendarDataProviderTest {
             context = context
         )
 
-        val dataProvider = GoogleCalendarDataProvider(timeProvider, testScheduler)
+        val dataProvider = GoogleCalendarDataProvider(context,timeProvider, testScheduler)
 
         timeProvider.advanceTimeBy(0)
 
@@ -197,7 +197,7 @@ class GoogleCalendarDataProviderTest {
             context = context
         )
 
-        val dataProvider = GoogleCalendarDataProvider(timeProvider, testScheduler)
+        val dataProvider = GoogleCalendarDataProvider(context,timeProvider, testScheduler)
 
         timeProvider.advanceTimeBy(0)
 

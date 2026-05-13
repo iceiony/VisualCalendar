@@ -1,9 +1,5 @@
 package com.iceiony.visualcalendar
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,11 +27,9 @@ import com.iceiony.visualcalendar.preview.PreviewTimeProvider
 import com.iceiony.visualcalendar.providers.DataProvider
 import com.iceiony.visualcalendar.providers.iCalDataProvider
 import com.iceiony.visualcalendar.providers.toTime
-import kotlinx.coroutines.channels.ticker
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.rx3.asFlow
 import java.time.LocalDateTime
-import kotlin.concurrent.timer
 
 @Composable
 fun CalendarDayView(

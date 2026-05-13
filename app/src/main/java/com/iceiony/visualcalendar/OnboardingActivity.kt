@@ -10,6 +10,7 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
 
 
@@ -43,7 +44,12 @@ class OnboardingActivity : AppCompatActivity() {
 
         checkAllPermissionsGranted()
 
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_onboarding)
+
+        findViewById<ComposeView>(R.id.permissions_checklist_view).setContent {
+            PermissionsChecklistView()
+        }
+
         registerPermissionsLaunchers()
 
         if (!Permissions.isOverlayPermissionGranted(this)) {

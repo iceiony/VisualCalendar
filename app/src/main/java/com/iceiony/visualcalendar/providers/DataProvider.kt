@@ -34,10 +34,10 @@ abstract class ScheduledDataProvider(
     protected val scheduler : Scheduler,
 ) : DataProvider {
 
-    protected val subject = ReplaySubject.create<List<VEvent>>(1)
     protected val client = OkHttpClient.Builder()
         .callTimeout(Duration.ofSeconds(30))
         .build()
+    protected val subject = ReplaySubject.create<List<VEvent>>(1)
 
     companion object {
         @Volatile
