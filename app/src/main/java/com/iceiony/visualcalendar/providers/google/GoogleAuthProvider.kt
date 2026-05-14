@@ -2,6 +2,7 @@ package com.iceiony.visualcalendar.providers.google
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import com.iceiony.visualcalendar.OnboardingActivity
 import com.iceiony.visualcalendar.VisualCalendarApp
 import com.iceiony.visualcalendar.local_storage.SecureStorage
@@ -13,28 +14,28 @@ import com.iceiony.visualcalendar.providers.AuthProvidier
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.isActive
 import okhttp3.FormBody
 import okhttp3.Request
 import org.json.JSONObject
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.NonCancellable
 
 class GoogleAuthProvider(
-    private val context: Context = VisualCalendarApp.instance.applicationContext,
-    private val secureStorage: SecureStorage = SecureStorage(context)
+    val context: Context = VisualCalendarApp.instance.applicationContext,
+    val secureStorage: SecureStorage = SecureStorage(context),
+    val oauthURL : String = "https://oauth2.googleapis.com",
+    val client: OkHttpClient = OkHttpClient.Builder().callTimeout(Duration.ofSeconds(30)).build()
 ) : AuthProvidier {
-    private val prefs = context.getSharedPreferences("google_auth", Context.MODE_PRIVATE)
+    val prefs = context.getSharedPreferences("google_auth", Context.MODE_PRIVATE)
 
-    private val client = OkHttpClient.Builder()
-        .callTimeout(Duration.ofSeconds(30))
-        .build()
-
-
-    override fun requestDeviceCode(): Flow<AuthProvidier.DeviceCodeInfo> = flow {
+    override fun requestDeviceCode(): Flow<AuthProvidier.DeviceCodeInfo> = channelFlow {
         while (currentCoroutineContext().isActive) {
             val response = client.newCall(
                 Request.Builder()
-                    .url("https://oauth2.googleapis.com/device/code")
+                    .url("$oauthURL/device/code")
                     .post(
                         FormBody.Builder()
                             .add("client_id", BuildConfig.GOOGLE_CLIENT_ID)
@@ -44,8 +45,7 @@ class GoogleAuthProvider(
                     .build()
             ).execute()
 
-            val json =
-                JSONObject(response.body?.string() ?: throw Exception("Empty device code response"))
+            val json = JSONObject(response.body?.string() ?: throw Exception("Empty device code response"))
 
             val deviceCode = AuthProvidier.DeviceCodeInfo(
                 deviceCode = json.getString("device_code"),
@@ -55,11 +55,65 @@ class GoogleAuthProvider(
                 expiresIn = json.getLong("expires_in")
             )
 
-            emit(deviceCode)
+            send(deviceCode)
+
+            val pollJob = launch {
+                if (pollForToken(deviceCode)) {
+                    close()
+                }
+            }
 
             delay(deviceCode.expiresIn * 1000L)
+
+            pollJob.cancel()
         }
 
+    }
+
+    suspend fun pollForToken(deviceCode: AuthProvidier.DeviceCodeInfo): Boolean {
+        while (currentCoroutineContext().isActive) {
+            delay(deviceCode.intervalSeconds * 1000L)
+
+            val response = client.newCall(
+                Request.Builder()
+                    .url("$oauthURL/token")
+                    .post(
+                        FormBody.Builder()
+                            .add("client_id", BuildConfig.GOOGLE_CLIENT_ID)
+                            .add("client_secret", BuildConfig.GOOGLE_CLIENT_SECRET)
+                            .add("device_code", deviceCode.deviceCode)
+                            .add("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
+                            .build()
+                    )
+                    .build()
+            ).execute()
+
+            val json = JSONObject(response.body?.string() ?: throw Exception("Empty poll response"))
+            if (json.has("error")) {
+                when (val error = json.getString("error")) {
+                    "authorization_pending", "slow_down" -> continue
+                    else -> {
+                        Log.e( "GoogleAuthProvider", "Authorization failed: $error")
+                        return false
+                    }
+                }
+            }
+
+            withContext(NonCancellable) {
+                secureStorage.saveValue("access_token", json.getString("access_token"))
+                secureStorage.saveValue("refresh_token", json.getString("refresh_token"))
+                prefs.edit {
+                    putLong(
+                        "token_expiry",
+                        System.currentTimeMillis() / 1000 + json.getLong("expires_in")
+                    )
+                }
+            }
+
+            return true
+        }
+
+        return false
     }
 
     suspend fun getValidAccessToken(): String? {
