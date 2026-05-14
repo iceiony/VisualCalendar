@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +40,8 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 
 fun generateQrCode(content: String, sizePx: Int): Bitmap {
@@ -57,11 +60,9 @@ fun PermissionsChecklistView(
 ) {
     val context = LocalContext.current
 
-    var deviceCodeResponse by remember { mutableStateOf<AuthProvidier.DeviceCodeInfo?>(null) }
+    val deviceCodeResponse by authProvider.requestDeviceCode().collectAsState(initial = null)
 
-    LaunchedEffect(Unit) {
-        deviceCodeResponse = authProvider.requestDeviceCode()
-    }
+    LaunchedEffect(Unit) { }
 
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 2.dp)
@@ -179,12 +180,15 @@ fun PermissionsChecklistPreview() {
     PermissionsChecklistView(
         //authProvider = GoogleAuthProvider(LocalContext.current),
         authProvider = object : AuthProvidier {
-            override suspend fun requestDeviceCode(): AuthProvidier.DeviceCodeInfo {
-                return AuthProvidier.DeviceCodeInfo(
-                    deviceCode = "device_code",
-                    userCode = "user_code",
-                    verificationUrl = "https://example.com/verify",
-                    intervalSeconds = 5,
+            override fun requestDeviceCode(): Flow<AuthProvidier.DeviceCodeInfo> = flow {
+                emit(
+                 AuthProvidier.DeviceCodeInfo(
+                        deviceCode = "device_code",
+                        userCode = "user_code",
+                        verificationUrl = "https://example.com/verify",
+                        intervalSeconds = 5,
+                        expiresIn = 300L
+                    )
                 )
             }
         }

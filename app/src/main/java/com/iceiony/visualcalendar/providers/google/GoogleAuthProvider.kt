@@ -10,6 +10,11 @@ import java.time.Duration
 import androidx.core.content.edit
 import com.iceiony.visualcalendar.BuildConfig
 import com.iceiony.visualcalendar.providers.AuthProvidier
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
 import okhttp3.FormBody
 import okhttp3.Request
 import org.json.JSONObject
@@ -25,27 +30,36 @@ class GoogleAuthProvider(
         .build()
 
 
-    override suspend fun requestDeviceCode(): AuthProvidier.DeviceCodeInfo {
-        val response = client.newCall(
-            Request.Builder()
-                .url("https://oauth2.googleapis.com/device/code")
-                .post(
-                    FormBody.Builder()
-                        .add("client_id", BuildConfig.GOOGLE_CLIENT_ID)
-                        .add("scope", "https://www.googleapis.com/auth/calendar.readonly")
-                        .build()
-                )
-                .build()
-        ).execute()
+    override fun requestDeviceCode(): Flow<AuthProvidier.DeviceCodeInfo> = flow {
+        while (currentCoroutineContext().isActive) {
+            val response = client.newCall(
+                Request.Builder()
+                    .url("https://oauth2.googleapis.com/device/code")
+                    .post(
+                        FormBody.Builder()
+                            .add("client_id", BuildConfig.GOOGLE_CLIENT_ID)
+                            .add("scope", "https://www.googleapis.com/auth/calendar.readonly")
+                            .build()
+                    )
+                    .build()
+            ).execute()
 
-        val json = JSONObject(response.body?.string() ?: throw Exception("Empty device code response"))
+            val json =
+                JSONObject(response.body?.string() ?: throw Exception("Empty device code response"))
 
-        return AuthProvidier.DeviceCodeInfo(
-            deviceCode = json.getString("device_code"),
-            userCode = json.getString("user_code"),
-            verificationUrl = json.getString("verification_url"),
-            intervalSeconds = json.getInt("interval"),
-        )
+            val deviceCode = AuthProvidier.DeviceCodeInfo(
+                deviceCode = json.getString("device_code"),
+                userCode = json.getString("user_code"),
+                verificationUrl = json.getString("verification_url"),
+                intervalSeconds = json.getInt("interval"),
+                expiresIn = json.getLong("expires_in")
+            )
+
+            emit(deviceCode)
+
+            delay(deviceCode.expiresIn * 1000L)
+        }
+
     }
 
     suspend fun getValidAccessToken(): String? {
