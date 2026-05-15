@@ -1,16 +1,19 @@
 package com.iceiony.visualcalendar
 
 import android.app.Activity
+import kotlinx.coroutines.test.runTest
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.result.ActivityResult
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
+import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
 import org.junit.After
 import org.junit.Before
@@ -27,9 +30,14 @@ import org.robolectric.shadows.ShadowToast
 @RunWith(RobolectricTestRunner::class)
 @Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
 class OnboardingActivityTest {
+    private lateinit var context: Context
+
     @Before
     fun setup() {
         Intents.init()
+
+        context = ApplicationProvider.getApplicationContext<Context>()
+
         //ShadowSettings.setCanDrawOverlays(false)
         //ShadowSettings.ShadowSecure.reset();
     }
@@ -99,7 +107,39 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun `opens CalendarDayActivity when permissions are already granted`() {
+    fun `waits for google authentication confirmation when no credentials available`()  = runTest {
+        GoogleAuthProvider(context).clearAuthState()
+
+        ShadowSettings.setCanDrawOverlays(true)
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val serviceId = "${context.packageName}/com.iceiony.CalendarAccessibilityService"
+
+        ShadowSecureSettings.setString(
+            context.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+            serviceId)
+
+        val mainActivity  = ActivityScenario.launchActivityForResult(OnboardingActivity::class.java)
+
+        assert(mainActivity.state == Lifecycle.State.RESUMED) {
+            "Expected OnboardingActivity to wait for user confirmation after permissions are granted, but it is not in RESUMED state"
+        }
+    }
+
+    @Test
+    fun `opens CalendarDayActivity when permissions are already granted`()  = runTest{
+        GoogleAuthProvider(context).setAuthState(
+            """
+            {
+                "access_token": "test_access_token",
+                "refresh_token": "test_refresh_token",
+                "expires_in": 3600
+            }
+            """.trimIndent().let { org.json.JSONObject(it) }
+        )
+
+
         ShadowSettings.setCanDrawOverlays(true)
 
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -120,7 +160,17 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun `finishes the activity when all permissions granted`() {
+    fun `finishes the activity when all permissions granted`()  = runTest {
+        GoogleAuthProvider(context).setAuthState(
+            """
+            {
+                "access_token": "test_access_token",
+                "refresh_token": "test_refresh_token",
+                "expires_in": 3600
+            }
+            """.trimIndent().let { org.json.JSONObject(it) }
+        )
+
         ShadowSettings.setCanDrawOverlays(false)
         ShadowSettings.reset()
 

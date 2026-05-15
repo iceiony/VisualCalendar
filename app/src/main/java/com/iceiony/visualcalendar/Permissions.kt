@@ -13,7 +13,9 @@ object Permissions {
         val accessibilityEnabled = isAccessibilityServiceEnabled(context)
         //Log.d("Permissions", "Accessibility service enabled: $accessibilityEnabled")
 
-        return canDrawOverlays && accessibilityEnabled
+        val calendarAccessGranted = isCalendarAccessGranted(context)
+
+        return canDrawOverlays && accessibilityEnabled && calendarAccessGranted
     }
 
     fun isOverlayPermissionGranted(context: Context): Boolean {

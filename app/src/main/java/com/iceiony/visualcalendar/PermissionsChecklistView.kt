@@ -129,8 +129,7 @@ fun PermissionsChecklistView(
                     CircularProgressIndicator(modifier = Modifier.padding(16.dp))
                 }
             } else {
-                Text("Google Calendar access to display your events on the calendar overlay.")
-                //generate QR code for user to scan with their phone to log in to Google Calendar on the app
+                Text("Google Calendar accessed to display your events on the calendar overlay.")
             }
         }
     }

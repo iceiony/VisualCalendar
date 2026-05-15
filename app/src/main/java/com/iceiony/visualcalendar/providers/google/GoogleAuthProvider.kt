@@ -99,16 +99,7 @@ class GoogleAuthProvider(
                 }
             }
 
-            withContext(NonCancellable) {
-                secureStorage.saveValue("access_token", json.getString("access_token"))
-                secureStorage.saveValue("refresh_token", json.getString("refresh_token"))
-                prefs.edit {
-                    putLong(
-                        "token_expiry",
-                        System.currentTimeMillis() / 1000 + json.getLong("expires_in")
-                    )
-                }
-            }
+            setAuthState(json)
 
             return true
         }
@@ -133,11 +124,28 @@ class GoogleAuthProvider(
 
         if (expiry < 0) {
             throw Exception("No token expiry stored")
-        } else if (expiry > System.currentTimeMillis() / 1000 + 60) {
+        } else if (expiry < System.currentTimeMillis() / 1000) {
             return secureStorage.getValue("access_token") ?: throw Exception("No access token stored")
         }
 
         TODO()
+    }
+
+    suspend fun setAuthState( json: JSONObject ) {
+        withContext(NonCancellable) {
+            prefs.edit {
+                putLong(
+                    "token_expiry",
+                    System.currentTimeMillis() / 1000 + json.getLong("expires_in")
+                )
+
+                putString( "calendar_id", "primary" )
+            }
+
+            secureStorage.saveValue("access_token", json.getString("access_token"))
+            secureStorage.saveValue("refresh_token", json.getString("refresh_token"))
+        }
+
     }
 
     suspend fun clearAuthState() {
