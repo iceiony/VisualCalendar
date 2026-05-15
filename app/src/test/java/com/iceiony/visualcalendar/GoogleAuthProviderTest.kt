@@ -138,6 +138,10 @@ class GoogleAuthProviderTest {
         )
 
         assert( authProvider.prefs.contains("token_expiry") )
+
+        //check the token expires in the future
+        val expiryTime = authProvider.prefs.getLong("token_expiry", 0L)
+        assert( expiryTime > System.currentTimeMillis() / 1000L )
     }
 
 }
