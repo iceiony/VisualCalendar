@@ -1,5 +1,6 @@
 package com.iceiony.visualcalendar
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.compose.foundation.Image
@@ -25,12 +26,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,10 +56,9 @@ fun generateQrCode(content: String, sizePx: Int): Bitmap {
 @Composable
 fun PermissionsChecklistView(
     modifier: Modifier = Modifier,
-    authProvider: AuthProvidier = GoogleAuthProvider(context = LocalContext.current)
+    permissionUpdates: PermissionUpdates = Permissions.updates(context = LocalContext.current),
+    authProvider: AuthProvidier = GoogleAuthProvider(context = LocalContext.current),
 ) {
-    val context = LocalContext.current
-
     val deviceCodeResponse by authProvider.requestDeviceCode().collectAsState(initial = null)
 
     LaunchedEffect(Unit) { }
@@ -85,23 +83,23 @@ fun PermissionsChecklistView(
 
         PermissionRow(
             header = "Overlay Permission" ,
-            checked = Permissions.isOverlayPermissionGranted(context),
+            checked = permissionUpdates.isOverlayPermissionGranted,
         ){
             Text("Required to display calendar overlay on top of other apps.")
         }
 
         PermissionRow(
             header = "Accessibility Service Permission" ,
-            checked = Permissions.isAccessibilityServiceEnabled(context),
+            checked = permissionUpdates.isAccessibilityServiceEnabled,
         ){
             Text("Required to detect when to show/hide the calendar overlay based on the foreground app.")
         }
 
         PermissionRow(
             header = "Google Calendar Access",
-            checked = Permissions.isCalendarAccessGranted(context),
+            checked = permissionUpdates.isCalendarAccessGranted,
         ){
-            if (!Permissions.isCalendarAccessGranted(context)) {
+            if (!permissionUpdates.isCalendarAccessGranted) {
                 Text("Scan QR or use code on separate device.")
                 if (deviceCodeResponse != null) {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -172,13 +170,15 @@ private fun PermissionRow(
     }
 }
 
+@SuppressLint("UnrememberedMutableState")
 @Preview()
 @Composable
 fun PermissionsChecklistPreview() {
     val context = LocalContext.current
+    val permissionUpdates by mutableStateOf(Permissions.updates(context))
 
     PermissionsChecklistView(
-        //authProvider = GoogleAuthProvider(LocalContext.current),
+        permissionUpdates = permissionUpdates,
         authProvider = object : AuthProvidier {
             override fun requestDeviceCode(): Flow<AuthProvidier.DeviceCodeInfo> = flow {
                 emit(

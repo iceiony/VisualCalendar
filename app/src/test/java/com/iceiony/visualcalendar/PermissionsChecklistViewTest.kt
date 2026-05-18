@@ -3,29 +3,18 @@ package com.iceiony.visualcalendar
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.compose.ui.test.assertAll
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.printToLog
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.work.Configuration
-import androidx.work.testing.SynchronousExecutor
-import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.AuthProvidier
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -49,12 +38,6 @@ class PermissionsChecklistViewTest {
     fun setup() {
         context = ApplicationProvider.getApplicationContext<Context>()
 
-        val config = Configuration.Builder()
-            .setMinimumLoggingLevel(Log.DEBUG)
-            .setExecutor(SynchronousExecutor())
-            .build()
-
-        WorkManagerTestInitHelper.initializeTestWorkManager(context, config)
     }
 
     @After
@@ -83,7 +66,7 @@ class PermissionsChecklistViewTest {
     @Test
     fun `has no CheckBox ticked when no permissions granted`()  {
         composeTestRule.setContent {
-            PermissionsChecklistView( authProvider =  unauthorisedAuthProvider())
+            PermissionsChecklistView(authProvider =  unauthorisedAuthProvider())
         }
 
         composeTestRule.waitForIdle()
@@ -112,7 +95,7 @@ class PermissionsChecklistViewTest {
 
         //inflate view
         composeTestRule.setContent {
-            PermissionsChecklistView( authProvider =  unauthorisedAuthProvider() )
+            PermissionsChecklistView(authProvider =  unauthorisedAuthProvider(),)
         }
 
         composeTestRule.waitForIdle()

@@ -2,7 +2,6 @@ package com.iceiony.visualcalendar
 
 import android.content.Context
 import android.provider.Settings
-import android.util.Log
 
 object Permissions {
 
@@ -35,4 +34,19 @@ object Permissions {
             .contains("calendar_id")
     }
 
+    fun updates(context: Context): PermissionUpdates {
+        return PermissionUpdates(
+            isOverlayPermissionGranted = isOverlayPermissionGranted(context),
+            isAccessibilityServiceEnabled = isAccessibilityServiceEnabled(context),
+            isCalendarAccessGranted = isCalendarAccessGranted(context)
+        )
+    }
+
+}
+
+data class PermissionUpdates(
+    val isOverlayPermissionGranted: Boolean,
+    val isAccessibilityServiceEnabled: Boolean,
+    val isCalendarAccessGranted: Boolean
+) {
 }

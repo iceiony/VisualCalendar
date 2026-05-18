@@ -7,6 +7,10 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.result.ActivityResult
+import androidx.compose.ui.test.isOn
+import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -17,6 +21,7 @@ import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -30,6 +35,9 @@ import org.robolectric.shadows.ShadowToast
 @RunWith(RobolectricTestRunner::class)
 @Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
 class OnboardingActivityTest {
+
+    @get:Rule
+    val composeTestRule = createAndroidComposeRule<OnboardingActivity>()
     private lateinit var context: Context
 
     @Before
@@ -171,18 +179,39 @@ class OnboardingActivityTest {
             """.trimIndent().let { org.json.JSONObject(it) }
         )
 
-        ShadowSettings.setCanDrawOverlays(false)
         ShadowSettings.reset()
+        ShadowSettings.setCanDrawOverlays(false)
 
         val mainActivity = ActivityScenario.launch(OnboardingActivity::class.java)
+
+        composeTestRule.waitForIdle()
+        var checkedCount = composeTestRule
+            .onAllNodes(isToggleable() and isOn())
+            .fetchSemanticsNodes()
+            .size
+
+        assert(checkedCount == 0) {
+            "Expected 0 permissions to be checked initially, but found $checkedCount."
+        }
 
         // Simulate granting overlay permission
         ShadowSettings.setCanDrawOverlays(true)
         mainActivity.onActivity { activity ->
             activity.overlayPermissionsCallback.onActivityResult(
-                ActivityResult(Activity.RESULT_OK, null)
+                ActivityResult(Activity.RESULT_OK, Intent())
             )
         }
+
+        composeTestRule.waitForIdle()
+        checkedCount = composeTestRule
+            .onAllNodes(isToggleable() and isOn())
+            .fetchSemanticsNodes()
+            .size
+
+        assert(checkedCount == 1) {
+            "Expected 1 permission to be checked after granting overlay permission, but found $checkedCount."
+        }
+
 
         //simulate granting accessibility permission
         val serviceId = "${context.packageName}/com.iceiony.CalendarAccessibilityService"
@@ -197,6 +226,16 @@ class OnboardingActivityTest {
             activity.accessibilityPermissionsCallback.onActivityResult(
                 ActivityResult(Activity.RESULT_OK, null)
             )
+        }
+
+        composeTestRule.waitForIdle()
+        checkedCount = composeTestRule
+            .onAllNodes(isToggleable() and isOn())
+            .fetchSemanticsNodes()
+            .size
+
+        assert(checkedCount == 2) {
+            "Expected 2 permissions to be checked after granting accessibility permission, but found $checkedCount"
         }
 
 
