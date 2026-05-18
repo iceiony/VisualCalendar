@@ -185,7 +185,6 @@ class OnboardingActivityTest {
         }
 
         //simulate granting accessibility permission
-        val context = ApplicationProvider.getApplicationContext<Context>()
         val serviceId = "${context.packageName}/com.iceiony.CalendarAccessibilityService"
         ShadowSecureSettings.setString(
             context.contentResolver,

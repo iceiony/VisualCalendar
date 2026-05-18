@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -113,7 +114,7 @@ fun PermissionsChecklistView(
                     Image(
                         bitmap = qrBitmap.asImageBitmap(),
                         contentDescription = "Device authorization QR code",
-                        modifier = Modifier.size(200.dp),
+                        modifier = Modifier.size(200.dp)
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -156,7 +157,7 @@ private fun PermissionRow(
     ) {
         Checkbox(
             checked = checked,
-            onCheckedChange = null,
+            onCheckedChange = {},
         )
         Spacer(modifier = Modifier.width(8.dp))
         Column {
@@ -189,6 +190,14 @@ fun PermissionsChecklistPreview() {
                         expiresIn = 300L
                     )
                 )
+            }
+
+            override suspend fun getValidAccessToken(): String? {
+                TODO("Not yet implemented")
+            }
+
+            override fun isAuthorised(): Boolean {
+                TODO("Not yet implemented")
             }
         }
     )
