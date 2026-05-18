@@ -128,7 +128,7 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun `opens CalendarDayActivity when permissions are already granted`()  = runTest{
+    fun `completes the OnboardingActivity when permissions are already granted`()  = runTest{
         GoogleAuthProvider(context).setAuthState(
             """
             {

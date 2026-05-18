@@ -5,6 +5,10 @@ import kotlinx.coroutines.flow.Flow
 interface AuthProvidier {
 
     fun requestDeviceCode(): Flow<DeviceCodeInfo>
+
+    suspend fun getValidAccessToken(): String?
+    fun isAuthorised(): Boolean
+
     data class DeviceCodeInfo(
         val deviceCode: String,
         val userCode: String,

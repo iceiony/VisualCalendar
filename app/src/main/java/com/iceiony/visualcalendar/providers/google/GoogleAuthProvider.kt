@@ -107,7 +107,7 @@ class GoogleAuthProvider(
         return false
     }
 
-    suspend fun getValidAccessToken(): String? {
+    override suspend fun getValidAccessToken(): String? {
         //check if expiry token exists
         if( !prefs.contains("token_expiry") ) {
             //launch onboarding activity
@@ -158,6 +158,10 @@ class GoogleAuthProvider(
         }
 
         return json.getString("access_token")
+    }
+
+    override fun isAuthorised(): Boolean {
+        return prefs.contains("token_expiry")
     }
 
     suspend fun setAuthState( json: JSONObject ) {

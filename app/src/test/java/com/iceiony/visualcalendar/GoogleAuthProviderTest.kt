@@ -147,6 +147,9 @@ class GoogleAuthProviderTest {
     @Test
     fun `can retrieve an active access token if already authorised` () = runTest{
         val authProvider = GoogleAuthProvider(context)
+        authProvider.clearAuthState()
+
+        assert(!authProvider.isAuthorised())
 
         authProvider.setAuthState(
             """
@@ -162,6 +165,6 @@ class GoogleAuthProviderTest {
 
         val token = authProvider.getValidAccessToken()
 
-
+        assert(authProvider.isAuthorised())
     }
 }
