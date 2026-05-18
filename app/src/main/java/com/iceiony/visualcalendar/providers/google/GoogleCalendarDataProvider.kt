@@ -58,7 +58,15 @@ class GoogleCalendarDataProvider(
         }
     }
 
-    fun getMainCalendar() : String? {
+    suspend fun getMainCalendar() : String? {
+        if (!prefs.contains("calendar_id")){
+            val calendarList = calendars()
+
+            if (calendarList.isEmpty()) throw Exception("No calendars found for user")
+
+            setMainCalendar(calendarList.keys.first())
+        }
+
         return prefs.getString("calendar_id", null)
     }
 
