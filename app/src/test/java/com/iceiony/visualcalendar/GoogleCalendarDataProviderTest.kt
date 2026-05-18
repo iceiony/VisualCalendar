@@ -10,6 +10,7 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.TestTimeProvider
 import io.reactivex.rxjava3.schedulers.TestScheduler
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -39,6 +40,41 @@ class GoogleCalendarDataProviderTest {
 
     @After
     fun tearDown() { }
+
+    @Test
+    fun `can retrieve and select a calendar from the list of calendars the user has access to`() = runTest {
+        val dataProvider = GoogleCalendarDataProvider()
+
+        dataProvider.authProvider.setAuthState(
+            """
+                {
+                  "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,
+                  "expires_in" : ${System.currentTimeMillis() / 1000 - 60} ,
+                  "refresh_token" : "${BuildConfig.TEST_REFRESH_TOKEN}" ,
+                  "scope" : "https://www.googleapis.com/auth/calendar.readonly",
+                  "token_type" : "Bearer"
+                }
+            """.trimIndent().let { org.json.JSONObject(it) }
+        )
+
+        val calendars = dataProvider.calendars()
+
+        assert(calendars.isNotEmpty()) {
+            "Expected to retrieve at least one calendar, but got none."
+        }
+
+        //expect more than one
+        assert(calendars.size > 1) {
+            "Expected to retrieve more than one calendar, but got ${calendars.size}."
+        }
+
+        dataProvider.setMainCalendar(calendars.keys.first())
+        //putString( "calendar_id", "primary" )
+
+        assert( calendars.keys.first() == dataProvider.getMainCalendar()) {
+            "Expected selected calendar ID to be ${calendars.keys.first()}, but got ${dataProvider.getMainCalendar()}."
+        }
+    }
 
     @Test
     fun `can subscribe to calendar events`() {

@@ -128,7 +128,36 @@ class GoogleAuthProvider(
             return secureStorage.getValue("access_token") ?: throw Exception("No access token stored")
         }
 
-        TODO()
+        val refreshToken = secureStorage.getValue("refresh_token") ?: throw Exception("Not authorized — no refresh token")
+        val response = client.newCall(
+            Request.Builder()
+                .url("https://oauth2.googleapis.com/token")
+                .post(
+                    FormBody.Builder()
+                        .add("client_id", BuildConfig.GOOGLE_CLIENT_ID)
+                        .add("client_secret", BuildConfig.GOOGLE_CLIENT_SECRET)
+                        .add("refresh_token", refreshToken)
+                        .add("grant_type", "refresh_token")
+                        .build()
+                )
+                .build()
+        ).execute()
+
+        val json = JSONObject(response.body?.string() ?: throw Exception("Empty refresh response"))
+        if (json.has("error")) throw Exception("Token refresh failed: ${json.getString("error")}")
+
+        withContext(NonCancellable) {
+            prefs.edit {
+                putLong(
+                    "token_expiry",
+                    System.currentTimeMillis() / 1000 + json.getLong("expires_in")
+                )
+            }
+
+            secureStorage.saveValue("access_token", json.getString("access_token"))
+        }
+
+        return json.getString("access_token")
     }
 
     suspend fun setAuthState( json: JSONObject ) {
@@ -138,8 +167,6 @@ class GoogleAuthProvider(
                     "token_expiry",
                     System.currentTimeMillis() / 1000 + json.getLong("expires_in")
                 )
-
-                putString( "calendar_id", "primary" )
             }
 
             secureStorage.saveValue("access_token", json.getString("access_token"))

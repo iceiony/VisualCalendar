@@ -144,4 +144,24 @@ class GoogleAuthProviderTest {
         assert( expiryTime > System.currentTimeMillis() / 1000L )
     }
 
+    @Test
+    fun `can retrieve an active access token if already authorised` () = runTest{
+        val authProvider = GoogleAuthProvider(context)
+
+        authProvider.setAuthState(
+            """
+                {
+                  "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,
+                  "expires_in" : ${System.currentTimeMillis() / 1000 - 60} ,
+                  "refresh_token" : "${BuildConfig.TEST_REFRESH_TOKEN}" ,
+                  "scope" : "https://www.googleapis.com/auth/calendar.readonly",
+                  "token_type" : "Bearer"
+                }
+            """.trimIndent().let { org.json.JSONObject(it) }
+        )
+
+        val token = authProvider.getValidAccessToken()
+
+
+    }
 }
