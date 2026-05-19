@@ -27,6 +27,11 @@ interface DataProvider {
     fun today(context: Context): Observable<List<VEvent>>
     fun refresh(now: LocalDateTime)
     fun dispose()
+
+    suspend fun calendars(): Map<String, String>
+
+    suspend fun getMainCalendar() : String?
+    fun setMainCalendar(calendarId: String)
 }
 
 abstract class ScheduledDataProvider(

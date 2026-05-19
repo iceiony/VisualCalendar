@@ -88,6 +88,7 @@ dependencies {
     implementation(libs.androidx.espresso.intents)
     implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.androidx.datastore.tink)
+    implementation(libs.androidx.foundation)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

@@ -2,7 +2,7 @@ package com.iceiony.visualcalendar.providers
 
 import kotlinx.coroutines.flow.Flow
 
-interface AuthProvidier {
+interface AuthProvider {
 
     fun requestDeviceCode(): Flow<DeviceCodeInfo>
 
@@ -14,7 +14,8 @@ interface AuthProvidier {
         val userCode: String,
         val verificationUrl: String,
         val intervalSeconds: Int,
-        val expiresIn : Long
+        val expiresIn : Long,
+        var completed: Boolean = false
     )
 
 }

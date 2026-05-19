@@ -1,0 +1,178 @@
+package com.iceiony.visualcalendar
+
+import android.app.Application
+import android.os.Build
+import android.provider.Settings
+import androidx.compose.ui.test.assertAll
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.isOff
+import androidx.compose.ui.test.isOn
+import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import kotlinx.coroutines.test.runTest
+import androidx.test.core.app.ApplicationProvider
+import com.iceiony.visualcalendar.providers.AuthProvider
+import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
+import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
+import com.iceiony.visualcalendar.viewmodels.PermissionsViewModel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import org.json.JSONObject
+import org.junit.After
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowSettings
+import kotlin.String
+import kotlin.intArrayOf
+
+@RunWith(RobolectricTestRunner::class)
+@Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
+class PermissionsChecklistTest {
+
+    @get:Rule
+    val composeTestRule = createComposeRule()
+    private lateinit var application: Application
+
+    @Before
+    fun setup() {
+        application = ApplicationProvider.getApplicationContext<Application>()
+    }
+
+    @After
+    fun tearDown() {}
+
+    private fun unauthorisedAuthProvider() = object : AuthProvider {
+        override fun requestDeviceCode(): Flow<AuthProvider.DeviceCodeInfo> {
+            return flow {
+                emit(
+                    AuthProvider.DeviceCodeInfo(
+                        deviceCode = "test_device_code",
+                        userCode = "test_user_code",
+                        verificationUrl = "https://example.com/verify",
+                        intervalSeconds = 5,
+                        expiresIn = 30
+                    )
+                )
+            }
+        }
+
+        override suspend fun getValidAccessToken(): String? = null
+
+        override fun isAuthorised(): Boolean = false
+    }
+
+    @Test
+    fun `has no CheckBox ticked when no permissions granted`()  {
+        composeTestRule.setContent {
+            PermissionsChecklistView(
+                viewModel = PermissionsViewModel(
+                    application = application,
+                    authProvider = unauthorisedAuthProvider()
+                )
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onAllNodes(isToggleable())
+            .assertCountEquals(3)
+
+        composeTestRule
+            .onAllNodes(isToggleable())
+            .assertAll(isOff())
+    }
+
+    @Test
+    fun `can have overlay and accessibility permissions ticked but QR displayed for calendar authorisation`() {
+        //pretend overlay permissions granted
+        ShadowSettings.setCanDrawOverlays(true)
+
+        //pretend accessibility service enabled
+        val serviceId = "${application.packageName}/com.iceiony.CalendarAccessibilityService"
+        ShadowSecureSettings.setString(
+            application.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+            serviceId
+        )
+
+        //inflate view
+        composeTestRule.setContent {
+            PermissionsChecklistView(
+                viewModel = PermissionsViewModel(
+                    application = application,
+                    authProvider = unauthorisedAuthProvider()
+                )
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        //check correct permissions are ticked
+        val checkedCount = composeTestRule
+            .onAllNodes(isToggleable() and isOn())
+            .fetchSemanticsNodes()
+            .size
+
+        assert(checkedCount == 2) {
+            "Expected 2 permissions to be checked, but found $checkedCount."
+        }
+
+        composeTestRule
+            .onNodeWithText("Scan QR or use code on separate device.")
+            .assertExists()
+    }
+
+    @Test
+    fun `shows a list of calendars when all permissions were granted`()  = runTest {
+
+        //grant overlay permissions
+        ShadowSettings.setCanDrawOverlays(true)
+
+        //grant accessibility service permissions
+        val serviceId = "${application.packageName}/com.iceiony.CalendarAccessibilityService"
+        ShadowSecureSettings.setString(
+            application.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+            serviceId
+        )
+
+        //pretend calendar access granted with valid token
+        val authProvider = GoogleAuthProvider()
+        authProvider.setAuthState(
+            """
+                {
+                  "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,
+                  "expires_in" : ${System.currentTimeMillis() / 1000 - 60} ,
+                  "refresh_token" : "${BuildConfig.TEST_REFRESH_TOKEN}" ,
+                  "scope" : "https://www.googleapis.com/auth/calendar.readonly",
+                  "token_type" : "Bearer"
+                }
+            """.trimIndent().let { JSONObject(it) }
+        )
+
+        //inflate view
+        composeTestRule.setContent {
+            PermissionsChecklistView(
+                viewModel = PermissionsViewModel(
+                    application = application,
+                    authProvider = unauthorisedAuthProvider()
+                )
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithText("Select the calendar you want to display.")
+            .assertExists()
+
+    }
+
+
+}

@@ -5,12 +5,12 @@ import android.content.Intent
 import android.util.Log
 import com.iceiony.visualcalendar.OnboardingActivity
 import com.iceiony.visualcalendar.VisualCalendarApp
-import com.iceiony.visualcalendar.local_storage.SecureStorage
+import com.iceiony.visualcalendar.providers.SecureStorage
 import okhttp3.OkHttpClient
 import java.time.Duration
 import androidx.core.content.edit
 import com.iceiony.visualcalendar.BuildConfig
-import com.iceiony.visualcalendar.providers.AuthProvidier
+import com.iceiony.visualcalendar.providers.AuthProvider
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -28,10 +28,10 @@ class GoogleAuthProvider(
     val secureStorage: SecureStorage = SecureStorage(context),
     val oauthURL : String = "https://oauth2.googleapis.com",
     val client: OkHttpClient = OkHttpClient.Builder().callTimeout(Duration.ofSeconds(30)).build()
-) : AuthProvidier {
+) : AuthProvider {
     val prefs = context.getSharedPreferences("google_auth", Context.MODE_PRIVATE)
 
-    override fun requestDeviceCode(): Flow<AuthProvidier.DeviceCodeInfo> = channelFlow {
+    override fun requestDeviceCode(): Flow<AuthProvider.DeviceCodeInfo> = channelFlow {
         while (currentCoroutineContext().isActive) {
             val response = client.newCall(
                 Request.Builder()
@@ -47,7 +47,7 @@ class GoogleAuthProvider(
 
             val json = JSONObject(response.body?.string() ?: throw Exception("Empty device code response"))
 
-            val deviceCode = AuthProvidier.DeviceCodeInfo(
+            val deviceCode = AuthProvider.DeviceCodeInfo(
                 deviceCode = json.getString("device_code"),
                 userCode = json.getString("user_code"),
                 verificationUrl = json.getString("verification_url"),
@@ -59,6 +59,10 @@ class GoogleAuthProvider(
 
             val pollJob = launch {
                 if (pollForToken(deviceCode)) {
+                    deviceCode.completed = true
+
+                    send(deviceCode)
+
                     close()
                 }
             }
@@ -70,7 +74,7 @@ class GoogleAuthProvider(
 
     }
 
-    suspend fun pollForToken(deviceCode: AuthProvidier.DeviceCodeInfo): Boolean {
+    suspend fun pollForToken(deviceCode: AuthProvider.DeviceCodeInfo): Boolean {
         while (currentCoroutineContext().isActive) {
             delay(deviceCode.intervalSeconds * 1000L)
 

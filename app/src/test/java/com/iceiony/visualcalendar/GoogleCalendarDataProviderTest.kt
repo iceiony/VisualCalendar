@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.TestTimeProvider
 import io.reactivex.rxjava3.schedulers.TestScheduler
@@ -44,9 +45,10 @@ class GoogleCalendarDataProviderTest {
 
     @Test
     fun `can retrieve the list of calendars the user has access to`() = runTest {
-        val dataProvider = GoogleCalendarDataProvider()
+        val authProvider = GoogleAuthProvider()
+        val dataProvider = GoogleCalendarDataProvider(authProvider = authProvider)
 
-        dataProvider.authProvider.setAuthState(
+        authProvider.setAuthState(
             """
                 {
                   "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,
@@ -72,9 +74,10 @@ class GoogleCalendarDataProviderTest {
 
     @Test
     fun `defaults to the first calendar when no calendar main is configured`() = runTest {
-        val dataProvider = GoogleCalendarDataProvider()
+        val authProvider = GoogleAuthProvider()
+        val dataProvider = GoogleCalendarDataProvider(authProvider = authProvider)
 
-        dataProvider.authProvider.setAuthState(
+        authProvider.setAuthState(
             """
                 {
                   "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,

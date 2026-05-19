@@ -1,22 +1,20 @@
-package com.iceiony.visualcalendar.local_storage
+package com.iceiony.visualcalendar.providers
 
 import android.content.Context
 import android.util.Base64
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import com.google.crypto.tink.Aead
 import com.google.crypto.tink.RegistryConfiguration
+import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.aead.AesGcmKeyManager
 import com.google.crypto.tink.integration.android.AndroidKeysetManager
-import androidx.datastore.preferences.preferencesDataStore
-import androidx.datastore.preferences.core.stringPreferencesKey
-import com.google.crypto.tink.aead.AeadConfig
 import com.iceiony.visualcalendar.VisualCalendarApp
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 
 class SecureStorage(
-    private val context: Context = VisualCalendarApp.instance.applicationContext
+    private val context: Context = VisualCalendarApp.Companion.instance.applicationContext
 ) {
     init {
         AeadConfig.register()

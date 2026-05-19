@@ -34,19 +34,4 @@ object Permissions {
             .contains("calendar_id")
     }
 
-    fun updates(context: Context): PermissionUpdates {
-        return PermissionUpdates(
-            isOverlayPermissionGranted = isOverlayPermissionGranted(context),
-            isAccessibilityServiceEnabled = isAccessibilityServiceEnabled(context),
-            isCalendarAccessGranted = isCalendarAccessGranted(context)
-        )
-    }
-
-}
-
-data class PermissionUpdates(
-    val isOverlayPermissionGranted: Boolean,
-    val isAccessibilityServiceEnabled: Boolean,
-    val isCalendarAccessGranted: Boolean
-) {
 }

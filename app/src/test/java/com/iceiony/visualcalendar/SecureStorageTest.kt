@@ -3,8 +3,7 @@ package com.iceiony.visualcalendar
 import android.content.Context
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
-import com.iceiony.visualcalendar.local_storage.SecureStorage
-import kotlinx.coroutines.flow.first
+import com.iceiony.visualcalendar.providers.SecureStorage
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before

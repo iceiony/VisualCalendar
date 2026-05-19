@@ -37,6 +37,7 @@ datastorePreferencesCore = "1.2.1"
 datastoreTink = "1.3.0-alpha09"
 workRuntime = "2.11.2"
 workRuntimeKtx = "2.11.2"
+foundation = "1.11.1"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -80,6 +81,7 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 rxandroid = { module = "io.reactivex.rxjava3:rxandroid", version.ref = "rxandroid" }
 rxjava = { module = "io.reactivex.rxjava3:rxjava", version.ref = "rxjava" }
 rxkotlin = { module = "io.reactivex.rxjava3:rxkotlin", version.ref = "rxkotlin" }
+androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

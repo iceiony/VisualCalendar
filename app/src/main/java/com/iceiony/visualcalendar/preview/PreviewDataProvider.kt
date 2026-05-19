@@ -58,5 +58,21 @@ class PreviewDataProvider(
     override fun dispose() {
         subject.onComplete()
     }
+
+    override suspend fun calendars(): Map<String, String> {
+        return mapOf(
+            "calendar_1" to "Calendar 1",
+            "calendar_2" to "Calendar 2",
+            "calendar_3" to "Calendar 3"
+        )
+    }
+
+    override suspend fun getMainCalendar(): String? {
+        return "calendar_1"
+    }
+
+    override fun setMainCalendar(calendarId: String) {
+        // No-op for preview
+    }
 }
 

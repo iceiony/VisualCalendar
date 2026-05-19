@@ -12,16 +12,17 @@ import java.time.LocalDateTime
 import com.iceiony.visualcalendar.VisualCalendarApp
 import com.iceiony.visualcalendar.providers.ScheduledDataProvider
 import okhttp3.Request
+import com.iceiony.visualcalendar.providers.AuthProvider
 
 class GoogleCalendarDataProvider(
     context: Context = VisualCalendarApp.instance.applicationContext,
     timeProvider: TimeProvider = SystemTimeProvider(),
     scheduler : Scheduler = Schedulers.io(),
-    val authProvider: GoogleAuthProvider = GoogleAuthProvider(context),
+    val authProvider: AuthProvider = GoogleAuthProvider(context),
 ) : ScheduledDataProvider(timeProvider, scheduler) {
     val prefs = context.getSharedPreferences("google_calendar", Context.MODE_PRIVATE)
 
-    suspend fun calendars(): Map<String, String> {
+    override suspend fun calendars(): Map<String, String> {
         val token = authProvider.getValidAccessToken()
 
         //https://www.googleapis.com/calendar/v3/users/me/calendarList
@@ -52,13 +53,13 @@ class GoogleCalendarDataProvider(
         TODO("Not yet implemented")
     }
 
-    fun setMainCalendar(calendarId: String) {
+    override fun setMainCalendar(calendarId: String) {
         prefs.edit {
             putString("calendar_id", calendarId)
         }
     }
 
-    suspend fun getMainCalendar() : String? {
+    override suspend fun getMainCalendar() : String? {
         if (!prefs.contains("calendar_id")){
             val calendarList = calendars()
 

@@ -77,7 +77,7 @@ class OnboardingActivityTest {
         val mainActivity = ActivityScenario.launch(OnboardingActivity::class.java)
 
         mainActivity.onActivity { activity ->
-            activity.overlayPermissionsCallback.onActivityResult(
+            activity.viewModel.overlayPermissionsCallback.onActivityResult(
                 ActivityResult(Activity.RESULT_CANCELED, null)
             )
 
@@ -197,7 +197,7 @@ class OnboardingActivityTest {
         // Simulate granting overlay permission
         ShadowSettings.setCanDrawOverlays(true)
         mainActivity.onActivity { activity ->
-            activity.overlayPermissionsCallback.onActivityResult(
+            activity.viewModel.overlayPermissionsCallback.onActivityResult(
                 ActivityResult(Activity.RESULT_OK, Intent())
             )
         }
@@ -223,7 +223,7 @@ class OnboardingActivityTest {
 
         mainActivity.onActivity {
             activity ->
-            activity.accessibilityPermissionsCallback.onActivityResult(
+            activity.viewModel.accessibilityPermissionsCallback.onActivityResult(
                 ActivityResult(Activity.RESULT_OK, null)
             )
         }

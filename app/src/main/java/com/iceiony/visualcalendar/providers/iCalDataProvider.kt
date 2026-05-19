@@ -71,4 +71,18 @@ override fun getDaysEvents(now: LocalDateTime): List<VEvent> {
     return  (oneOffEvents + reoccurringEvents).sortedBy { it.dateStart.value }
 }
 
+    override suspend fun calendars(): Map<String, String> {
+        return mapOf(
+            "main" to "Main Calendar"
+        )
+    }
+
+    override suspend fun getMainCalendar(): String? {
+        return "main"
+    }
+
+    override fun setMainCalendar(calendarId: String) {
+        //ignored there's only one possible calendar
+    }
+
 }

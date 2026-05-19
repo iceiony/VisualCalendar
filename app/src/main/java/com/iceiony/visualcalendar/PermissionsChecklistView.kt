@@ -1,6 +1,8 @@
 package com.iceiony.visualcalendar
 
 import android.annotation.SuppressLint
+import android.app.Application
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.compose.foundation.Image
@@ -19,12 +21,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,14 +33,18 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
-import com.iceiony.visualcalendar.providers.AuthProvidier
+import com.iceiony.visualcalendar.providers.AuthProvider
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
+import biweekly.component.VEvent
+import com.iceiony.visualcalendar.providers.DataProvider
+import com.iceiony.visualcalendar.viewmodels.PermissionsViewModel
+import io.reactivex.rxjava3.core.Observable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import java.time.LocalDateTime
 
 
 fun generateQrCode(content: String, sizePx: Int): Bitmap {
@@ -56,12 +59,8 @@ fun generateQrCode(content: String, sizePx: Int): Bitmap {
 @Composable
 fun PermissionsChecklistView(
     modifier: Modifier = Modifier,
-    permissionUpdates: PermissionUpdates = Permissions.updates(context = LocalContext.current),
-    authProvider: AuthProvidier = GoogleAuthProvider(context = LocalContext.current),
+    viewModel: PermissionsViewModel,
 ) {
-    val deviceCodeResponse by authProvider.requestDeviceCode().collectAsState(initial = null)
-
-    LaunchedEffect(Unit) { }
 
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 2.dp)
@@ -83,52 +82,30 @@ fun PermissionsChecklistView(
 
         PermissionRow(
             header = "Overlay Permission" ,
-            checked = permissionUpdates.isOverlayPermissionGranted,
+            checked = viewModel.isOverlayPermissionGranted,
         ){
             Text("Required to display calendar overlay on top of other apps.")
         }
 
         PermissionRow(
             header = "Accessibility Service Permission" ,
-            checked = permissionUpdates.isAccessibilityServiceEnabled,
+            checked = viewModel.isAccessibilityServiceEnabled,
         ){
             Text("Required to detect when to show/hide the calendar overlay based on the foreground app.")
         }
 
         PermissionRow(
             header = "Google Calendar Access",
-            checked = permissionUpdates.isCalendarAccessGranted,
+            checked = viewModel.isCalendarAccessGranted,
         ){
-            if (!permissionUpdates.isCalendarAccessGranted) {
-                Text("Scan QR or use code on separate device.")
-                if (deviceCodeResponse != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    val qrBitmap = remember(deviceCodeResponse) {
-                        val qrContent = "${deviceCodeResponse?.verificationUrl}?user_code=${deviceCodeResponse?.userCode}"
-                        generateQrCode(qrContent, 400)
-                    }
-
-                    Image(
-                        bitmap = qrBitmap.asImageBitmap(),
-                        contentDescription = "Device authorization QR code",
-                        modifier = Modifier.size(200.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "Or Visit: ${deviceCodeResponse?.verificationUrl}"
-                    )
-                    Text(
-                        text = "CODE: ${deviceCodeResponse?.userCode}",
-                        fontWeight = FontWeight.Bold,
-                    )
-                } else {
-                    CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-                }
+            if (!viewModel.isCalendarAccessGranted) {
+                QrCodeChallenge(viewModel.deviceCodeResponse)
             } else {
-                Text("Google Calendar accessed to display your events on the calendar overlay.")
+                CalendarSelection(
+                    mainCalendar = viewModel.mainCalendar,
+                    calendars = viewModel.calendars,
+                    calendarSelectionCallback = viewModel.calendarSelectionCallback
+                )
             }
         }
     }
@@ -170,19 +147,84 @@ private fun PermissionRow(
     }
 }
 
+@Composable
+private fun QrCodeChallenge(
+    deviceCodeResponse : AuthProvider.DeviceCodeInfo?,
+) {
+    Text("Scan QR or use code on separate device.")
+    if (deviceCodeResponse != null) {
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val qrBitmap = remember(deviceCodeResponse) {
+            val qrContent = "${deviceCodeResponse.verificationUrl}?user_code=${deviceCodeResponse.userCode}"
+            generateQrCode(qrContent, 400)
+        }
+
+        Image(
+            bitmap = qrBitmap.asImageBitmap(),
+            contentDescription = "Device authorization QR code",
+            modifier = Modifier.size(200.dp)
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "Or Visit: ${deviceCodeResponse.verificationUrl}"
+        )
+        Text(
+            text = "CODE: ${deviceCodeResponse.userCode}",
+            fontWeight = FontWeight.Bold,
+        )
+    } else {
+        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+    }
+}
+
+@Composable
+fun CalendarSelection(
+    mainCalendar: String? = null,
+    calendars : Map<String, String> = emptyMap(),
+    calendarSelectionCallback:  (String) -> Unit = { },
+) {
+    Text("Google Calendar access is required to retrieve calendar events.")
+    if (calendars.isEmpty()) {
+        Text("Your account does not have access to any google calendars.")
+    } else {
+        //create RadioList from calendar entries
+        Text("Select the calendar you want to display.")
+        calendars.forEach { (key, value) ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+                    .clickable {
+                        calendarSelectionCallback(key)
+                    }
+            ) {
+                RadioButton(
+                    selected = mainCalendar == key,
+                    onClick = { }
+                )
+                Text(
+                    text = value,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+
+        }
+    }
+}
+
 @SuppressLint("UnrememberedMutableState")
 @Preview()
 @Composable
 fun PermissionsChecklistPreview() {
-    val context = LocalContext.current
-    val permissionUpdates by mutableStateOf(Permissions.updates(context))
-
-    PermissionsChecklistView(
-        permissionUpdates = permissionUpdates,
-        authProvider = object : AuthProvidier {
-            override fun requestDeviceCode(): Flow<AuthProvidier.DeviceCodeInfo> = flow {
+    val context = LocalContext.current.applicationContext as Application
+    val authProvider = object : AuthProvider {
+            override fun requestDeviceCode(): Flow<AuthProvider.DeviceCodeInfo> = flow {
                 emit(
-                 AuthProvidier.DeviceCodeInfo(
+                    AuthProvider.DeviceCodeInfo(
                         deviceCode = "device_code",
                         userCode = "user_code",
                         verificationUrl = "https://example.com/verify",
@@ -192,13 +234,22 @@ fun PermissionsChecklistPreview() {
                 )
             }
 
-            override suspend fun getValidAccessToken(): String? {
-                TODO("Not yet implemented")
-            }
-
-            override fun isAuthorised(): Boolean {
-                TODO("Not yet implemented")
-            }
+            override suspend fun getValidAccessToken(): String?  =  null
+            override fun isAuthorised(): Boolean = false
         }
-    )
+
+    val calendarProvider = object : DataProvider {
+        override suspend fun calendars(): Map<String, String> = emptyMap()
+        override suspend fun getMainCalendar(): String? = "main_calendar_id"
+
+        override fun today(context: Context): Observable<List<VEvent>> = Observable.just(emptyList())
+        override fun refresh(now: LocalDateTime) {}
+        override fun dispose() { }
+        override fun setMainCalendar(calendarId: String) { }
+
+    }
+
+    val viewModel = PermissionsViewModel(context, authProvider, calendarProvider)
+
+    PermissionsChecklistView( viewModel = viewModel )
 }
