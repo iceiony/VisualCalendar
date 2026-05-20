@@ -15,7 +15,6 @@ interface AuthProvider {
         val verificationUrl: String,
         val intervalSeconds: Int,
         val expiresIn : Long,
-        var completed: Boolean = false
     )
 
 }

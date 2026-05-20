@@ -1,6 +1,7 @@
 package com.iceiony.visualcalendar.providers.google
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import biweekly.component.VEvent
@@ -13,13 +14,15 @@ import com.iceiony.visualcalendar.VisualCalendarApp
 import com.iceiony.visualcalendar.providers.ScheduledDataProvider
 import okhttp3.Request
 import com.iceiony.visualcalendar.providers.AuthProvider
+import org.json.JSONObject
 
 class GoogleCalendarDataProvider(
     context: Context = VisualCalendarApp.instance.applicationContext,
     timeProvider: TimeProvider = SystemTimeProvider(),
     scheduler : Scheduler = Schedulers.io(),
     val authProvider: AuthProvider = GoogleAuthProvider(context),
-) : ScheduledDataProvider(timeProvider, scheduler) {
+    client: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder().callTimeout(java.time.Duration.ofSeconds(30)).build()
+) : ScheduledDataProvider(timeProvider, scheduler, client) {
     val prefs = context.getSharedPreferences("google_calendar", Context.MODE_PRIVATE)
 
     override suspend fun calendars(): Map<String, String> {
@@ -36,7 +39,7 @@ class GoogleCalendarDataProvider(
 
         val body = response.body?.string() ?: throw Exception("Empty calendar response")
 
-        val items = org.json.JSONObject(body).getJSONArray("items")
+        val items = JSONObject(body).getJSONArray("items")
 
         Log.i("GoogleCalendarDataProvider", "Received calendar list response: $body")
 

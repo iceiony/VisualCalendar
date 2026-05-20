@@ -96,7 +96,7 @@ fun PermissionsChecklistView(
 
         PermissionRow(
             header = "Google Calendar Access",
-            checked = viewModel.isCalendarAccessGranted,
+            checked = viewModel.isCalendarSelected,
         ){
             if (!viewModel.isCalendarAccessGranted) {
                 QrCodeChallenge(viewModel.deviceCodeResponse)

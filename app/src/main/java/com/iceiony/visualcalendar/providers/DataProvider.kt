@@ -35,13 +35,11 @@ interface DataProvider {
 }
 
 abstract class ScheduledDataProvider(
-    protected val timeProvider: TimeProvider,
-    protected val scheduler : Scheduler,
+    val timeProvider: TimeProvider,
+    val scheduler : Scheduler,
+    val client: OkHttpClient = OkHttpClient.Builder() .callTimeout(Duration.ofSeconds(30)) .build()
 ) : DataProvider {
 
-    protected val client = OkHttpClient.Builder()
-        .callTimeout(Duration.ofSeconds(30))
-        .build()
     protected val subject = ReplaySubject.create<List<VEvent>>(1)
 
     companion object {

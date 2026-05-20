@@ -12,9 +12,9 @@ object Permissions {
         val accessibilityEnabled = isAccessibilityServiceEnabled(context)
         //Log.d("Permissions", "Accessibility service enabled: $accessibilityEnabled")
 
-        val calendarAccessGranted = isCalendarAccessGranted(context)
+        val calendarConfigured = isMainCalendarConfigured(context)
 
-        return canDrawOverlays && accessibilityEnabled && calendarAccessGranted
+        return canDrawOverlays && accessibilityEnabled && calendarConfigured
     }
 
     fun isOverlayPermissionGranted(context: Context): Boolean {
@@ -28,7 +28,7 @@ object Permissions {
         return enabledServices.contains(context.packageName)
     }
 
-    fun isCalendarAccessGranted(context: Context): Boolean {
+    fun isMainCalendarConfigured(context: Context): Boolean {
         return context
             .getSharedPreferences("google_auth", Context.MODE_PRIVATE)
             .contains("calendar_id")

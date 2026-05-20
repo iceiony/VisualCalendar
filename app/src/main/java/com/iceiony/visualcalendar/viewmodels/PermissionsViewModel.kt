@@ -1,21 +1,16 @@
 package com.iceiony.visualcalendar.viewmodels
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.iceiony.visualcalendar.Permissions
 import com.iceiony.visualcalendar.R
-import com.iceiony.visualcalendar.VisualCalendarApp
 import com.iceiony.visualcalendar.providers.AuthProvider
 import com.iceiony.visualcalendar.providers.DataProvider
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
@@ -24,6 +19,7 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.application
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 
 class PermissionsViewModel(
@@ -46,7 +42,11 @@ class PermissionsViewModel(
         Permissions.isAccessibilityServiceEnabled(application)
     )
     var isCalendarAccessGranted: Boolean by mutableStateOf(
-        Permissions.isCalendarAccessGranted(application)
+        authProvider.isAuthorised()
+    )
+
+    var isCalendarSelected: Boolean by mutableStateOf(
+        Permissions.isMainCalendarConfigured(application)
     )
 
     //authentication and calendar access
@@ -56,7 +56,8 @@ class PermissionsViewModel(
     val calendarSelectionCallback: (String) -> Unit = { calendarId ->
         dataProvider.setMainCalendar(calendarId)
         mainCalendar = calendarId
-        isCalendarAccessGranted = true
+        isCalendarSelected = true
+        checkAllPermissions()
     }
 
     //overlay permission callback
@@ -77,10 +78,13 @@ class PermissionsViewModel(
         } else if ( !isAccessibilityServiceEnabled ) {
             requestAccessibilityPermissions()
         }
+
+        checkAllPermissions()
     }
 
     val accessibilityPermissionsCallback = ActivityResultCallback<ActivityResult> {
         isAccessibilityServiceEnabled = Permissions.isAccessibilityServiceEnabled(application)
+
         if (!isAccessibilityServiceEnabled) {
             Toast
                 .makeText(
@@ -91,6 +95,8 @@ class PermissionsViewModel(
         } else if (!isOverlayPermissionGranted) {
             requestOverlayPermissions()
         }
+
+        checkAllPermissions()
     }
 
     private fun requestOverlayPermissions() {
@@ -123,22 +129,35 @@ class PermissionsViewModel(
 
     // all done
     var allGranted : Boolean by mutableStateOf(
-        isOverlayPermissionGranted && isAccessibilityServiceEnabled && isCalendarAccessGranted
-    )
+        isOverlayPermissionGranted &&
+               isAccessibilityServiceEnabled &&
+               isCalendarAccessGranted &&
+               isCalendarSelected )
 
     init {
         //authentication tracking
         viewModelScope.launch {
-            if(!authProvider.isAuthorised()) {
-                authProvider.requestDeviceCode().collect {
-                    deviceCodeResponse = it
-                }
-            } else {
-                mainCalendar = dataProvider.getMainCalendar()
-                calendars = dataProvider.calendars()
+            if(!isCalendarAccessGranted) {
+                authProvider
+                    .requestDeviceCode()
+                    .collect { deviceCodeResponse = it }
             }
+
+            calendars = dataProvider.calendars()
+            isCalendarAccessGranted = authProvider.isAuthorised()
+            checkAllPermissions()
+
         }
         //overlay and accessibility access
+    }
+
+    fun checkAllPermissions(): Boolean {
+        allGranted = isOverlayPermissionGranted &&
+                isAccessibilityServiceEnabled &&
+                isCalendarAccessGranted &&
+                isCalendarSelected
+
+        return allGranted
     }
 
     fun start() {
@@ -146,9 +165,9 @@ class PermissionsViewModel(
             requestOverlayPermissions()
         } else if (!isAccessibilityServiceEnabled ) {
             requestAccessibilityPermissions()
-        } else {
-            allGranted = true
         }
+
+        checkAllPermissions()
     }
 
 }

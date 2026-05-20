@@ -22,6 +22,7 @@ import org.json.JSONObject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancel
 
 class GoogleAuthProvider(
     val context: Context = VisualCalendarApp.instance.applicationContext,
@@ -59,17 +60,21 @@ class GoogleAuthProvider(
 
             val pollJob = launch {
                 if (pollForToken(deviceCode)) {
-                    deviceCode.completed = true
-
-                    send(deviceCode)
-
-                    close()
+                    //send(deviceCode)
+                    try {
+                        cancel()
+                        close()
+                    } catch (e: Exception) {
+                        Log.e("GoogleAuthProvider", "Error closing device code flow: ${e.message}")
+                    }
+                } else {
+                    Log.e("GoogleAuthProvider", "Polling for token failed")
                 }
             }
 
             delay(deviceCode.expiresIn * 1000L)
 
-            pollJob.cancel()
+            //pollJob.cancel()
         }
 
     }
@@ -103,9 +108,7 @@ class GoogleAuthProvider(
                 }
             }
 
-            setAuthState(json)
-
-            return true
+            return setAuthState(json)
         }
 
         return false
@@ -168,19 +171,18 @@ class GoogleAuthProvider(
         return prefs.contains("token_expiry")
     }
 
-    suspend fun setAuthState( json: JSONObject ) {
-        withContext(NonCancellable) {
-            prefs.edit {
-                putLong(
-                    "token_expiry",
-                    System.currentTimeMillis() / 1000 + json.getLong("expires_in")
-                )
-            }
-
-            secureStorage.saveValue("access_token", json.getString("access_token"))
-            secureStorage.saveValue("refresh_token", json.getString("refresh_token"))
+    suspend fun setAuthState( json: JSONObject ) : Boolean {
+        prefs.edit {
+            putLong(
+                "token_expiry",
+                System.currentTimeMillis() / 1000 + json.getLong("expires_in")
+            )
         }
 
+        secureStorage.saveValue("access_token", json.getString("access_token"))
+        secureStorage.saveValue("refresh_token", json.getString("refresh_token"))
+
+        return true
     }
 
     suspend fun clearAuthState() {
