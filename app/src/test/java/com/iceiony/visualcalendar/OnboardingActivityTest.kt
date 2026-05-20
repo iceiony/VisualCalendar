@@ -20,6 +20,7 @@ import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
+import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
 import com.iceiony.visualcalendar.viewmodels.PermissionsViewModel
 import org.junit.After
@@ -149,6 +150,7 @@ class OnboardingActivityTest {
             }
             """.trimIndent().let { org.json.JSONObject(it) }
         )
+        GoogleCalendarDataProvider(context = application).setMainCalendar("test_calendar_id")
 
         ShadowSettings.setCanDrawOverlays(true)
 

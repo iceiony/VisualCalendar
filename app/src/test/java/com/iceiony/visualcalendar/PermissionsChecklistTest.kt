@@ -9,15 +9,25 @@ import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import kotlinx.coroutines.test.runTest
 import androidx.test.core.app.ApplicationProvider
 import com.iceiony.visualcalendar.providers.AuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
+import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
 import com.iceiony.visualcalendar.viewmodels.PermissionsViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Before
@@ -29,6 +39,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
 import kotlin.String
 import kotlin.intArrayOf
+import kotlinx.coroutines.test.advanceTimeBy
 
 @RunWith(RobolectricTestRunner::class)
 @Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
@@ -40,11 +51,14 @@ class PermissionsChecklistTest {
 
     @Before
     fun setup() {
+        Dispatchers.setMain(StandardTestDispatcher())
         application = ApplicationProvider.getApplicationContext<Application>()
     }
 
     @After
-    fun tearDown() {}
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private fun unauthorisedAuthProvider() = object : AuthProvider {
         override fun requestDeviceCode(): Flow<AuthProvider.DeviceCodeInfo> {
@@ -77,6 +91,7 @@ class PermissionsChecklistTest {
             )
         }
 
+        //advanceUntilIdle()
         composeTestRule.waitForIdle()
 
         composeTestRule
@@ -129,7 +144,7 @@ class PermissionsChecklistTest {
     }
 
     @Test
-    fun `shows a list of calendars when all permissions were granted`()  = runTest {
+    fun `shows a list of calendars when already authenticated`()  = runTest {
 
         //grant overlay permissions
         ShadowSettings.setCanDrawOverlays(true)
@@ -148,7 +163,7 @@ class PermissionsChecklistTest {
             """
                 {
                   "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,
-                  "expires_in" : ${System.currentTimeMillis() / 1000 - 60} ,
+                  "expires_in" : ${ -60 } ,
                   "refresh_token" : "${BuildConfig.TEST_REFRESH_TOKEN}" ,
                   "scope" : "https://www.googleapis.com/auth/calendar.readonly",
                   "token_type" : "Bearer"
@@ -156,23 +171,31 @@ class PermissionsChecklistTest {
             """.trimIndent().let { JSONObject(it) }
         )
 
+        composeTestRule.waitForIdle()
+
         //inflate view
         composeTestRule.setContent {
             PermissionsChecklistView(
                 viewModel = PermissionsViewModel(
                     application = application,
-                    authProvider = unauthorisedAuthProvider()
+                    authProvider = authProvider
                 )
             )
         }
 
-        composeTestRule.waitForIdle()
+        waitForCoroutineExecution()
 
-        composeTestRule
-            .onNodeWithText("Select the calendar you want to display.")
-            .assertExists()
+        composeTestRule.onNodeWithText("Select the calendar you want to display.").assertExists()
 
     }
 
+    private fun TestScope.waitForCoroutineExecution(times : Int = 4) {
+        advanceUntilIdle()
+        composeTestRule.waitForIdle()
+        for (i in 1..times) {
+            advanceTimeBy(1L)
+            composeTestRule.waitForIdle()
+        }
+    }
 
 }

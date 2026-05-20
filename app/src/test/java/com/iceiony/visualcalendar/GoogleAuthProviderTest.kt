@@ -155,7 +155,7 @@ class GoogleAuthProviderTest {
             """
                 {
                   "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,
-                  "expires_in" : ${System.currentTimeMillis() / 1000 - 60} ,
+                  "expires_in" : ${-60} ,
                   "refresh_token" : "${BuildConfig.TEST_REFRESH_TOKEN}" ,
                   "scope" : "https://www.googleapis.com/auth/calendar.readonly",
                   "token_type" : "Bearer"

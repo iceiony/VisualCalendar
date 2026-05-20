@@ -131,7 +131,7 @@ class GoogleAuthProvider(
 
         if (expiry < 0) {
             throw Exception("No token expiry stored")
-        } else if (expiry < System.currentTimeMillis() / 1000) {
+        } else if (expiry > System.currentTimeMillis() / 1000) {
             return secureStorage.getValue("access_token") ?: throw Exception("No access token stored")
         }
 
