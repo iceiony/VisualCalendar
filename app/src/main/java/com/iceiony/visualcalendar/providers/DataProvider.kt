@@ -16,6 +16,9 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.ReplaySubject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.rx3.rxSingle
 import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
 import java.time.Duration
@@ -62,8 +65,7 @@ abstract class ScheduledDataProvider(
     }
 
     override fun refresh(now: LocalDateTime) {
-        Observable
-            .fromCallable{ getDaysEvents(now) }
+        rxSingle {  getDaysEvents(now)  }
             .subscribeOn(scheduler)
             .observeOn(scheduler)
             .subscribe(
@@ -133,7 +135,7 @@ abstract class ScheduledDataProvider(
         WorkManager.getInstance(context).enqueue( work )
     }
 
-    abstract fun getDaysEvents(now: LocalDateTime): List<VEvent>
+    abstract suspend fun getDaysEvents(now: LocalDateTime): List<VEvent>
 
 }
 

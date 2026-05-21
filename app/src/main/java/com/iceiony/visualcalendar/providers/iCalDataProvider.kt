@@ -24,7 +24,7 @@ class iCalDataProvider(
     private val iCalUrl: String = BuildConfig.ICAL_DEBUG_URL
 ) : ScheduledDataProvider(timeProvider, scheduler) {
 
-override fun getDaysEvents(now: LocalDateTime): List<VEvent> {
+override suspend fun getDaysEvents(now: LocalDateTime): List<VEvent> {
     val request = Request.Builder().url(iCalUrl).get().build()
     val response = client.newCall(request).execute()
 

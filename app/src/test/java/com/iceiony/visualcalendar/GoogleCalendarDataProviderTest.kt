@@ -11,10 +11,17 @@ import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.TestTimeProvider
 import io.reactivex.rxjava3.schedulers.TestScheduler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -26,10 +33,14 @@ import kotlin.intArrayOf
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.S])
 class GoogleCalendarDataProviderTest {
+    private var authProvider: GoogleAuthProvider = GoogleAuthProvider()
     private lateinit var context: Context
 
     @Before
-    fun setup() {
+    fun setup()  = runTest {
+        Dispatchers.setMain(StandardTestDispatcher())
+
+
         context = ApplicationProvider.getApplicationContext<Context>()
 
         val config = Configuration.Builder()
@@ -38,18 +49,12 @@ class GoogleCalendarDataProviderTest {
             .build();
 
         WorkManagerTestInitHelper.initializeTestWorkManager(context, config);
-    }
 
-    @After
-    fun tearDown() { }
+        authProvider = GoogleAuthProvider()
 
-    @Test
-    fun `can retrieve the list of calendars the user has access to`() = runTest {
-        val authProvider = GoogleAuthProvider()
-        val dataProvider = GoogleCalendarDataProvider(authProvider = authProvider)
-
-        authProvider.setAuthState(
-            """
+        if(!authProvider.isAuthorised()) {
+            authProvider.setAuthState(
+                """
                 {
                   "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,
                   "expires_in" : ${- 60} ,
@@ -57,8 +62,19 @@ class GoogleCalendarDataProviderTest {
                   "scope" : "https://www.googleapis.com/auth/calendar.readonly",
                   "token_type" : "Bearer"
                 }
-            """.trimIndent().let { org.json.JSONObject(it) }
-        )
+            """.trimIndent().let { JSONObject(it) }
+            )
+        }
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `can retrieve the list of calendars the user has access to`() = runTest {
+        val dataProvider = GoogleCalendarDataProvider(authProvider = authProvider)
 
         val calendars = dataProvider.calendars()
 
@@ -74,20 +90,7 @@ class GoogleCalendarDataProviderTest {
 
     @Test
     fun `defaults to the first calendar when no calendar main is configured`() = runTest {
-        val authProvider = GoogleAuthProvider()
         val dataProvider = GoogleCalendarDataProvider(authProvider = authProvider)
-
-        authProvider.setAuthState(
-            """
-                {
-                  "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,
-                  "expires_in" : ${- 60} ,
-                  "refresh_token" : "${BuildConfig.TEST_REFRESH_TOKEN}" ,
-                  "scope" : "https://www.googleapis.com/auth/calendar.readonly",
-                  "token_type" : "Bearer"
-                }
-            """.trimIndent().let { JSONObject(it) }
-        )
 
         val calendars = dataProvider.calendars()
 
@@ -112,13 +115,22 @@ class GoogleCalendarDataProviderTest {
     }
 
     @Test
-    fun `can subscribe to calendar events`() {
+    fun `can subscribe to calendar events`()  = runTest {
         val testScheduler = TestScheduler()
-        val dataProvider = GoogleCalendarDataProvider(context, scheduler = testScheduler)
+        val dataProvider = GoogleCalendarDataProvider(
+            context,
+            authProvider = authProvider,
+            scheduler = testScheduler
+        )
 
         val eventsStream = dataProvider.today(context).test()
 
         testScheduler.advanceTimeBy(0, TimeUnit.SECONDS)
+
+        eventsStream.awaitCount(1)
+
+        testScheduler.advanceTimeBy(0, TimeUnit.SECONDS)
+
 
         println("Events for today:")
         eventsStream.values().last().forEach { event ->
@@ -135,11 +147,15 @@ class GoogleCalendarDataProviderTest {
             context = context
         )
 
-        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, testScheduler)
+        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, testScheduler, authProvider)
 
         timeProvider.advanceTimeBy(0)
 
         val events = dataProvider.today(context).test()
+
+        events.awaitCount(1)
+
+        timeProvider.advanceTimeBy(0)
 
         assert(events.values().isNotEmpty()) {
             "Expected to have published today's events, but nothing was published."
@@ -169,17 +185,23 @@ class GoogleCalendarDataProviderTest {
             context = context
         )
 
-        val dataProvider = GoogleCalendarDataProvider(context,timeProvider, testScheduler)
+        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, testScheduler, authProvider)
 
         timeProvider.advanceTimeBy(0)
 
         val events = dataProvider.today(context).test()
+
+        events.awaitCount(1)
+        timeProvider.advanceTimeBy(0)
 
         assert(events.values().last().isEmpty()) {
             "Not expecting any events for the day. Test not setup correctly."
         }
 
         timeProvider.advanceTimeBy( 60 * 30 + 1) // 18:00:01
+
+        events.awaitCount(2)
+        timeProvider.advanceTimeBy(0)
 
         assert(events.values().last().isNotEmpty()) {
             "Expected next days' events to have been published."

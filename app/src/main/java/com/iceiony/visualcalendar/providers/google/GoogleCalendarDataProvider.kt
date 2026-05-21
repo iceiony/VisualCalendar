@@ -15,6 +15,10 @@ import com.iceiony.visualcalendar.providers.ScheduledDataProvider
 import okhttp3.Request
 import com.iceiony.visualcalendar.providers.AuthProvider
 import org.json.JSONObject
+import java.net.URLEncoder
+import java.time.Instant
+import java.time.ZoneId
+import java.util.Date
 
 class GoogleCalendarDataProvider(
     context: Context = VisualCalendarApp.instance.applicationContext,
@@ -51,9 +55,64 @@ class GoogleCalendarDataProvider(
         }.toMap()
     }
 
-    override fun getDaysEvents(now: LocalDateTime): List<VEvent> {
-        //val token = authProvider.getValidAccessToken()
-        TODO("Not yet implemented")
+    override suspend fun getDaysEvents(now: LocalDateTime): List<VEvent> {
+        val token = authProvider.getValidAccessToken()
+        val mainCalendar = getMainCalendar()
+
+        val zone = ZoneId.systemDefault()
+        val dayStart = now.toLocalDate().atStartOfDay(zone).toInstant()
+        val dayEnd = now.toLocalDate().plusDays(1).atStartOfDay(zone).toInstant()
+
+        val url = "https://www.googleapis.com/calendar/v3/calendars/" +
+                "${URLEncoder.encode(mainCalendar, "UTF-8")}/events" +
+                "?timeMin=${URLEncoder.encode(dayStart.toString(), "UTF-8")}" +
+                "&timeMax=${URLEncoder.encode(dayEnd.toString(), "UTF-8")}" +
+                "&singleEvents=true&orderBy=startTime&maxResults=50"
+
+        val response = client.newCall(
+            Request.Builder()
+                .url(url)
+                .addHeader("Authorization", "Bearer $token")
+                .get()
+                .build()
+        ).execute()
+
+        val body = response.body?.string() ?: throw Exception("Empty calendar response")
+        val items = JSONObject(body).getJSONArray("items")
+
+        Log.d("GoogleCalendarDataProvider", "Received ${items.length()} events for calendar $mainCalendar")
+        return (0 until items.length()).map { i ->
+            val item = items.getJSONObject(i)
+            VEvent().apply {
+                setSummary(item.optString("summary", "(No Title)"))
+                setDateStart(parseDateTime(item.getJSONObject("start")))
+                setDateEnd(parseDateTime(item.getJSONObject("end")))
+                //extractImageUrl(item)?.let { addExperimentalProperty("X-IMAGE-URL", it) }
+            }
+        }
+    }
+
+    private fun parseDateTime(timeObj: JSONObject): Date {
+        val dateStr = timeObj.optString("dateTime").ifEmpty { timeObj.getString("date") }
+        return try {
+            Date.from(Instant.parse(dateStr))
+        } catch (e: Exception) {
+            Date.from(java.time.LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault()).toInstant())
+        }
+    }
+
+    private fun extractImageUrl(item: JSONObject): String? {
+        if (item.has("attachments")) {
+            val attachments = item.getJSONArray("attachments")
+            for (i in 0 until attachments.length()) {
+                val attachment = attachments.getJSONObject(i)
+                if (attachment.optString("FMTTYPE").startsWith("image/")) {
+                    return attachment.optString("fileUrl").takeIf { it.isNotEmpty() }
+                }
+            }
+        }
+        val description = item.optString("description")
+        return Regex("""\[image](https?://\S+)""").find(description)?.groupValues?.get(1)
     }
 
     override fun setMainCalendar(calendarId: String) {
@@ -62,7 +121,7 @@ class GoogleCalendarDataProvider(
         }
     }
 
-    override suspend fun getMainCalendar() : String? {
+    override suspend fun getMainCalendar() : String {
         if (!prefs.contains("calendar_id")){
             val calendarList = calendars()
 
@@ -71,7 +130,7 @@ class GoogleCalendarDataProvider(
             setMainCalendar(calendarList.keys.first())
         }
 
-        return prefs.getString("calendar_id", null)
+        return prefs.getString("calendar_id", null) ?: throw Exception("No calendar selected")
     }
 
 }
