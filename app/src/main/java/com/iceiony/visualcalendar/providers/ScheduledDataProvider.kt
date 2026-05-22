@@ -53,6 +53,10 @@ abstract class ScheduledDataProvider(
     }
 
     init {
+        if (_instance != null) {
+            _instance?.destroy()
+        }
+
         _instance = this
         _isActive = false
     }

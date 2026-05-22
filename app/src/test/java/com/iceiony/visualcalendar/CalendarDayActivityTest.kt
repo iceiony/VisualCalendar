@@ -25,6 +25,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
 import android.util.Log
 import androidx.work.Configuration
+import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 
@@ -40,12 +41,7 @@ class CalendarDayActivityTest {
         //configure work manager since view data refresh depends on it
         context = ApplicationProvider.getApplicationContext<Context>()
 
-        val config = Configuration.Builder()
-            .setMinimumLoggingLevel(Log.DEBUG)
-            .setExecutor(SynchronousExecutor())
-            .build();
-
-        WorkManagerTestInitHelper.initializeTestWorkManager(context, config);
+        WorkManagerTestInitHelper.initializeTestWorkManager(context);
         Intents.init()
 
         //assume overlay permissions granted
@@ -62,6 +58,8 @@ class CalendarDayActivityTest {
 
     @After
     fun tearDown() {
+        WorkManager.getInstance(context).cancelAllWork()
+        WorkManagerTestInitHelper.closeWorkDatabase()
         Intents.release()
     }
 

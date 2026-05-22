@@ -17,6 +17,7 @@ import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowWindowManagerImpl
 import androidx.test.espresso.intent.Intents
+import androidx.work.WorkManager
 import kotlinx.coroutines.test.runTest
 import org.robolectric.Shadows.shadowOf
 
@@ -36,6 +37,9 @@ class CalendarAccessibilityServiceTest {
 
     @After
     fun tearDown() {
+        WorkManager.getInstance(context).cancelAllWork()
+        WorkManagerTestInitHelper.closeWorkDatabase()
+
         shadowOf(Looper.getMainLooper()).idle()
         Intents.release()
     }

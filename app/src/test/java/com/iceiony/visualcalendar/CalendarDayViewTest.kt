@@ -18,6 +18,7 @@ import org.robolectric.annotation.Config
 import java.time.LocalDateTime
 import android.util.Log
 import androidx.work.Configuration
+import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
@@ -36,16 +37,14 @@ class CalendarDayViewTest {
         //configure work manager since view data refresh depends on it
         context = ApplicationProvider.getApplicationContext<Context>()
 
-        val config = Configuration.Builder()
-            .setMinimumLoggingLevel(Log.DEBUG)
-            .setExecutor(SynchronousExecutor())
-            .build();
-
-        WorkManagerTestInitHelper.initializeTestWorkManager(context, config);
+        WorkManagerTestInitHelper.initializeTestWorkManager(context);
     }
 
     @After
-    fun tearDown() { }
+    fun tearDown() {
+        WorkManager.getInstance(context).cancelAllWork()
+        WorkManagerTestInitHelper.closeWorkDatabase()
+    }
 
     @Test
     fun `shows today's day name when before 6pm`() {

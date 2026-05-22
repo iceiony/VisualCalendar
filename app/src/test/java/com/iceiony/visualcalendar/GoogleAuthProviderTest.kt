@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent
+import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import app.cash.turbine.test
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
@@ -13,6 +14,7 @@ import com.iceiony.visualcalendar.testutil.TestInterceptor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -40,6 +42,8 @@ class GoogleAuthProviderTest {
 
     @After
     fun tearDown() {
+        WorkManager.getInstance(context).cancelAllWork()
+        WorkManagerTestInitHelper.closeWorkDatabase()
         Intents.release()
     }
 
@@ -67,6 +71,21 @@ class GoogleAuthProviderTest {
         assert(deviceCodeInfo.verificationUrl.isNotEmpty())
         assert(deviceCodeInfo.intervalSeconds > 0)
     }
+
+    //@Test
+    //fun `get new refresh token for tests` ()  = runTest{
+    //    val authProvider = GoogleAuthProvider(context)
+
+    //    authProvider.requestDeviceCode().test {
+    //        val deviceCode = awaitItem()
+
+    //        println("Please visit ${deviceCode.verificationUrl} and enter the code: ${deviceCode.userCode}")
+
+    //        awaitItem()
+    //    }
+
+    //    advanceUntilIdle()
+    //}
 
     @Test
     fun `device code updates after expiration duration passes with no authorisation`() = runTest {

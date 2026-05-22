@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import kotlinx.coroutines.test.runTest
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.AuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
@@ -61,6 +62,8 @@ class PermissionsChecklistTest {
 
     @After
     fun tearDown() {
+        WorkManager.getInstance(application).cancelAllWork()
+        WorkManagerTestInitHelper.closeWorkDatabase()
         Dispatchers.resetMain()
     }
 

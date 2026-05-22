@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Looper
+import android.os.StrictMode
 import android.provider.Settings
 import androidx.activity.result.ActivityResult
 import androidx.compose.ui.test.isOn
@@ -20,6 +21,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
+import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
@@ -53,10 +55,19 @@ class OnboardingActivityTest {
         application = ApplicationProvider.getApplicationContext<Application>()
 
         WorkManagerTestInitHelper.initializeTestWorkManager(application)
+
+        StrictMode.setVmPolicy(
+            StrictMode.VmPolicy.Builder()
+                .detectLeakedClosableObjects()
+                .penaltyLog()
+                .build()
+        )
     }
 
     @After
     fun tearDown() {
+        WorkManager.getInstance(application).cancelAllWork()
+        WorkManagerTestInitHelper.closeWorkDatabase()
         shadowOf(Looper.getMainLooper()).idle()
         Intents.release()
     }

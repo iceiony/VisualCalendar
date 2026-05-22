@@ -17,6 +17,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents
+import androidx.work.WorkManager
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
@@ -62,6 +64,8 @@ class OnboardingEndToEndTest {
         Intents.init()
 
         application = ApplicationProvider.getApplicationContext<Application>()
+
+        WorkManagerTestInitHelper.initializeTestWorkManager(application)
 
         ShadowSettings.reset()
         ShadowSettings.setCanDrawOverlays(false)
@@ -144,6 +148,8 @@ class OnboardingEndToEndTest {
 
     @After
     fun tearDown() {
+        WorkManager.getInstance(application).cancelAllWork()
+        WorkManagerTestInitHelper.closeWorkDatabase()
         Intents.release()
         Dispatchers.resetMain()
     }

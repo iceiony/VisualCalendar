@@ -6,6 +6,7 @@ import android.os.StrictMode
 import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
+import androidx.work.WorkManager
 import androidx.work.impl.schedulers
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -38,17 +39,18 @@ class iCalDataProviderTest {
         WorkManagerTestInitHelper.initializeTestWorkManager(context);
 
         //try to detect memory leaks in tests.
-        //StrictMode.setVmPolicy(
-        //    StrictMode.VmPolicy.Builder()
-        //        .detectLeakedClosableObjects()
-        //        .penaltyLog()
-        //        .build()
-        //)
+        StrictMode.setVmPolicy(
+            StrictMode.VmPolicy.Builder()
+                .detectLeakedClosableObjects()
+                .penaltyLog()
+                .build()
+        )
     }
 
     @After
     fun tearDown() {
-
+        WorkManager.getInstance(context).cancelAllWork()
+        WorkManagerTestInitHelper.closeWorkDatabase()
     }
 
     @Test
