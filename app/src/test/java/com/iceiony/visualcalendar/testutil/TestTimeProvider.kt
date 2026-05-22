@@ -6,13 +6,14 @@ import androidx.work.testing.TestDriver
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.preview.PreviewTimeProvider
 import io.reactivex.rxjava3.schedulers.TestScheduler
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import java.time.LocalDateTime
 
 // An overly complicated workaround to the fact that the WorkManager's TestDriver does not support simulating time advancing
 class TestTimeProvider(
     now: LocalDateTime,
-    scheduler: TestScheduler = TestScheduler(),
-    context: Context
+    context: Context,
+    scheduler: TestCoroutineScheduler? = null,
 ) : PreviewTimeProvider(now, scheduler) {
 
     private var totalTimePassedMillis: Long = 0

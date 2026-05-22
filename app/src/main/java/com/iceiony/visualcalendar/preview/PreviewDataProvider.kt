@@ -5,6 +5,9 @@ import biweekly.component.VEvent
 import com.iceiony.visualcalendar.providers.DataProvider
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.subjects.ReplaySubject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.onCompletion
 import java.time.LocalDateTime
 import java.time.ZoneId.systemDefault
 import java.util.Date
@@ -35,28 +38,24 @@ class PreviewDataProvider(
     }
 
     private var idx = -1
-    val subject = ReplaySubject.create<List<VEvent>>(1)
+    private val subject: MutableStateFlow<List<VEvent>>
 
     init {
         idx++
-        subject.onNext(testEvents.getOrNull(idx) ?: emptyList())
+        subject = MutableStateFlow<List<VEvent>>(
+            testEvents.getOrNull(idx) ?: emptyList()
+        )
     }
 
-    fun publish_next() {
+    suspend fun publishNext() {
         idx++
-        subject.onNext(testEvents.getOrNull(idx) ?: emptyList())
+        subject.emit(testEvents.getOrNull(idx) ?: emptyList())
     }
 
-    override fun today(context : Context): Observable<List<VEvent>> {
-        return subject.hide()
-    }
+    override fun today(): StateFlow<List<VEvent>> = subject
 
-    override fun refresh(now : LocalDateTime) {
-        subject.onNext(testEvents.getOrNull(idx) ?: emptyList())
-    }
-
-    override fun dispose() {
-        subject.onComplete()
+    override suspend fun refresh(now : LocalDateTime) {
+        subject.emit(testEvents.getOrNull(idx) ?: emptyList())
     }
 
     override suspend fun calendars(): Map<String, String> {
@@ -74,5 +73,7 @@ class PreviewDataProvider(
     override fun setMainCalendar(calendarId: String) {
         // No-op for preview
     }
+
+    override fun destroy() { }
 }
 

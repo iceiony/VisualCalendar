@@ -2,7 +2,7 @@ package com.iceiony.visualcalendar
 
 import android.content.Context
 import android.os.Build
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -20,6 +20,9 @@ import android.util.Log
 import androidx.work.Configuration
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
+import com.iceiony.visualcalendar.providers.iCalDataProvider
+import kotlinx.coroutines.test.runTest
 
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.S])
@@ -49,9 +52,10 @@ class CalendarDayViewTest {
         val timeProvider = PreviewTimeProvider(
             now = LocalDateTime.of(2025, 6, 26, 7, 10)
         )
+        val dataProvider = iCalDataProvider( context , timeProvider)
 
         composeTestRule.setContent {
-            CalendarDayView( timeProvider = timeProvider )
+            CalendarDayView( dataProvider, timeProvider )
         }
 
         val today = timeProvider.now()
@@ -64,9 +68,10 @@ class CalendarDayViewTest {
         val timeProvider = PreviewTimeProvider(
             now = LocalDateTime.of(2025, 6, 26, 18, 0,1)
         )
+        val dataProvider = iCalDataProvider( context , timeProvider)
 
         composeTestRule.setContent {
-            CalendarDayView( timeProvider = timeProvider )
+            CalendarDayView( dataProvider, timeProvider )
         }
 
         val tomorrow = timeProvider.now().toLocalDate().atStartOfDay().plusDays(1)
@@ -113,7 +118,7 @@ class CalendarDayViewTest {
     }
 
     @Test
-    fun test_name_day_and_events_are_updated_when_day_changes() {
+    fun test_name_day_and_events_are_updated_when_day_changes()  = runTest {
         val timeProvider = PreviewTimeProvider(
             now = LocalDateTime.of(2025, 6, 26, 7, 10),
         )
@@ -149,7 +154,7 @@ class CalendarDayViewTest {
         composeTestRule.onNodeWithText("Test Day 2").assertDoesNotExist()
 
         timeProvider.advanceTimeBy(16 * 60 * 60 + 50 * 60 + 1)
-        dataProvider.publish_next()
+        dataProvider.publishNext()
 
         composeTestRule.onNodeWithText("It's FRIDAY").assertExists()
         composeTestRule.onNodeWithText("Test Day 1").assertDoesNotExist()
@@ -157,7 +162,7 @@ class CalendarDayViewTest {
     }
 
     @Test
-    fun `test evening title gets updated to morning title` () {
+    fun `test evening title gets updated to morning title` () = runTest {
         val this_evening    = LocalDateTime.of(2025, 6, 26, 18, 10)
         val tomorrow_morning = this_evening.toLocalDate().atStartOfDay().plusDays(1).plusHours(6)
 

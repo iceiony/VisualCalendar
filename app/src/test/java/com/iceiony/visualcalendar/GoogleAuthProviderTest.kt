@@ -9,6 +9,7 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent
 import app.cash.turbine.test
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.testutil.TestInterceptor
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -25,6 +26,7 @@ import kotlin.intArrayOf
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.S])
+@OptIn(ExperimentalCoroutinesApi::class)
 class GoogleAuthProviderTest {
     private lateinit var context: Context
 

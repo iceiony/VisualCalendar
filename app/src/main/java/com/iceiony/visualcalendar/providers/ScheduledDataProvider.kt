@@ -9,41 +9,38 @@ import androidx.work.WorkerParameters
 import biweekly.component.VEvent
 import biweekly.property.DateEnd
 import biweekly.property.DateStart
-import biweekly.util.ICalDate
-import com.iceiony.visualcalendar.SystemTimeProvider
 import com.iceiony.visualcalendar.TimeProvider
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.core.Scheduler
-import io.reactivex.rxjava3.schedulers.Schedulers
-import io.reactivex.rxjava3.subjects.ReplaySubject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.rx3.rxSingle
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
 import java.time.Duration
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Date
 
 interface DataProvider {
-    fun today(context: Context): Observable<List<VEvent>>
-    fun refresh(now: LocalDateTime)
-    fun dispose()
+    fun today(): StateFlow<List<VEvent>?>
+    suspend fun refresh(now: LocalDateTime)
 
     suspend fun calendars(): Map<String, String>
 
     suspend fun getMainCalendar() : String?
     fun setMainCalendar(calendarId: String)
+    fun destroy()
 }
 
 abstract class ScheduledDataProvider(
+    context : Context,
     val timeProvider: TimeProvider,
-    val scheduler : Scheduler,
+    scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
     val client: OkHttpClient = OkHttpClient.Builder() .callTimeout(Duration.ofSeconds(30)) .build()
 ) : DataProvider {
 
-    protected val subject = ReplaySubject.create<List<VEvent>>(1)
+    protected val events = MutableStateFlow<List<VEvent>?>(null)
 
     companion object {
         @Volatile
@@ -56,33 +53,28 @@ abstract class ScheduledDataProvider(
         _instance = this
         _isActive  = true
 
-        val now = timeProvider.now()
-        if (now.hour < 18) {
-            refresh(now)
-        } else {
-            refresh(now.plusDays(1))
+        scope.launch {
+            scheduleNextRefresh(context.applicationContext)
+
+            val now = timeProvider.now()
+            if(now.hour < 18) {
+                refresh(now)
+            } else {
+                refresh(now.plusDays(1))
+            }
+        }
+
+    }
+
+    override suspend fun refresh(now: LocalDateTime) {
+        try {
+            events.emit(getDaysEvents(now))
+        } catch (e: Exception) {
+            Log.e("ScheduledDataProvider", "Error refreshing events", e)
         }
     }
 
-    override fun refresh(now: LocalDateTime) {
-        rxSingle {  getDaysEvents(now)  }
-            .subscribeOn(scheduler)
-            .observeOn(scheduler)
-            .subscribe(
-                { events -> subject.onNext(events) },
-                { error  -> subject.onError(error) }
-            )
-    }
-
-    override fun dispose() {
-        _isActive = false
-    }
-
-    override fun today(context: Context): Observable<List<VEvent>> {
-        scheduleNextRefresh(context)
-        return subject.hide()
-    }
-
+    override fun today(): StateFlow<List<VEvent>?> = events
 
     class CalendarRefreshWorker(
         context: Context,
@@ -91,10 +83,12 @@ abstract class ScheduledDataProvider(
 
         override suspend fun doWork(): Result {
             try {
-                if (_instance == null) {
-                    Log.e("iCalDataProvider", "No instance of iCalDataProvider found for refresh")
+                if (!_isActive or (_instance == null)) {
+                    Log.e("iCalDataProvider", "No instance of DataProvider found for refresh")
                     return Result.failure()
                 }
+
+                _instance.scheduleNextRefresh(applicationContext)
 
                 val timeProvider = _instance.timeProvider
 
@@ -104,8 +98,6 @@ abstract class ScheduledDataProvider(
                 } else {
                     _instance.refresh(now.plusDays(1))
                 }
-
-                _instance.scheduleNextRefresh(applicationContext)
 
                 return Result.success()
             } catch (e: Exception) {
@@ -137,6 +129,9 @@ abstract class ScheduledDataProvider(
 
     abstract suspend fun getDaysEvents(now: LocalDateTime): List<VEvent>
 
+    override fun destroy(){
+        _isActive = false
+    }
 }
 
 

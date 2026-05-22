@@ -28,27 +28,19 @@ import com.iceiony.visualcalendar.providers.DataProvider
 import com.iceiony.visualcalendar.providers.iCalDataProvider
 import com.iceiony.visualcalendar.providers.toTime
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.rx3.asFlow
 import java.time.LocalDateTime
 
 @Composable
 fun CalendarDayView(
-    modifier: Modifier = Modifier,
-    dataProvider: DataProvider = iCalDataProvider(),
-    timeProvider: TimeProvider = SystemTimeProvider()
+    dataProvider: DataProvider,
+    timeProvider: TimeProvider = SystemTimeProvider(),
+    modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
+    val events by dataProvider.today().collectAsState()
 
-    val eventsFlow = remember(dataProvider) {
-        dataProvider.today(context).asFlow()
-    }
-
-    val timeFlow = remember(dataProvider) {
-        eventsFlow.map { events -> timeProvider.now() }
-    }
-
-    val events by eventsFlow.collectAsState(initial = emptyList())
-    val now by timeFlow.collectAsState(initial = timeProvider.now())
+    val now by remember {
+        dataProvider.today().map { timeProvider.now() }
+    }.collectAsState(initial = timeProvider.now())
 
     val title = if(timeProvider.now().hour < 18) {
         "It's " + now.toLocalDate().dayOfWeek.name
@@ -78,7 +70,7 @@ fun CalendarDayView(
         }
 
 
-        events.forEach { event ->
+        events?.forEach { event ->
 
             Box(
                 modifier = Modifier.fillMaxWidth().padding(top = 2.dp)
@@ -112,11 +104,6 @@ fun CalendarDayView(
     LaunchedEffect(Unit) {
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            dataProvider.dispose()
-        }
-    }
 }
 
 @Preview()

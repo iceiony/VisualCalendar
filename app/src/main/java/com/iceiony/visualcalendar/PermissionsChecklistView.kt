@@ -43,6 +43,8 @@ import com.iceiony.visualcalendar.providers.DataProvider
 import com.iceiony.visualcalendar.viewmodels.PermissionsViewModel
 import io.reactivex.rxjava3.core.Observable
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import java.time.LocalDateTime
 
@@ -240,12 +242,13 @@ fun PermissionsChecklistPreview() {
 
     val calendarProvider = object : DataProvider {
         override suspend fun calendars(): Map<String, String> = emptyMap()
-        override suspend fun getMainCalendar(): String? = "main_calendar_id"
-
-        override fun today(context: Context): Observable<List<VEvent>> = Observable.just(emptyList())
-        override fun refresh(now: LocalDateTime) {}
-        override fun dispose() { }
+        override suspend fun getMainCalendar(): String = "main_calendar_id"
+        override fun today(): StateFlow<List<VEvent>> {
+            return MutableStateFlow<List<VEvent>>(emptyList())
+        }
+        override suspend fun refresh(now: LocalDateTime) {}
         override fun setMainCalendar(calendarId: String) { }
+        override fun destroy() { }
 
     }
 

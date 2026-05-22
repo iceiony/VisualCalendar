@@ -14,6 +14,9 @@ import com.iceiony.visualcalendar.VisualCalendarApp
 import com.iceiony.visualcalendar.providers.ScheduledDataProvider
 import okhttp3.Request
 import com.iceiony.visualcalendar.providers.AuthProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.json.JSONObject
 import java.net.URLEncoder
 import java.time.Instant
@@ -23,10 +26,10 @@ import java.util.Date
 class GoogleCalendarDataProvider(
     context: Context = VisualCalendarApp.instance.applicationContext,
     timeProvider: TimeProvider = SystemTimeProvider(),
-    scheduler : Scheduler = Schedulers.io(),
     val authProvider: AuthProvider = GoogleAuthProvider(context),
+    scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
     client: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder().callTimeout(java.time.Duration.ofSeconds(30)).build()
-) : ScheduledDataProvider(timeProvider, scheduler, client) {
+) : ScheduledDataProvider(context, timeProvider, scope , client) {
     val prefs = context.getSharedPreferences("google_calendar", Context.MODE_PRIVATE)
 
     override suspend fun calendars(): Map<String, String> {

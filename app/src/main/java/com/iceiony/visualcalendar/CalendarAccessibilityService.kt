@@ -22,12 +22,18 @@ import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.iceiony.visualcalendar.providers.DataProvider
+import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 
 class CalendarAccessibilityService :
     AccessibilityService(),
     androidx.lifecycle.LifecycleOwner,
     androidx.savedstate.SavedStateRegistryOwner
 {
+
+    companion object {
+        lateinit var dataProvider: DataProvider
+    }
 
     private var calendarView: ComposeView? = null
     private var windowManager: WindowManager? = null
@@ -53,6 +59,8 @@ class CalendarAccessibilityService :
         savedStateRegistryController.performAttach()
         savedStateRegistryController.performRestore(savedStateBundle)
 
+        dataProvider = GoogleCalendarDataProvider(this)
+
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
     }
 
@@ -64,7 +72,7 @@ class CalendarAccessibilityService :
         calendarView = ComposeView(this).apply{
             setViewTreeSavedStateRegistryOwner(this@CalendarAccessibilityService)
             setViewTreeLifecycleOwner(this@CalendarAccessibilityService)
-            setContent { CalendarDayView() }
+            setContent { CalendarDayView(dataProvider) }
         }
 
         calendarView?.visibility = View.GONE
@@ -132,6 +140,8 @@ class CalendarAccessibilityService :
     }
 
     override fun onDestroy() {
+        dataProvider.destroy()
+
         savedStateBundle = Bundle().apply {
             savedStateRegistryController.performSave(this)
         }

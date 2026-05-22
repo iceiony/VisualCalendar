@@ -19,6 +19,7 @@ import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
 import com.iceiony.visualcalendar.viewmodels.PermissionsViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -43,6 +44,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 
 @RunWith(RobolectricTestRunner::class)
 @Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
+@OptIn(ExperimentalCoroutinesApi::class)
 class PermissionsChecklistTest {
 
     @get:Rule
