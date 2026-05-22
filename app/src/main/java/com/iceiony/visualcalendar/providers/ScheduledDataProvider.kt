@@ -36,36 +36,24 @@ interface DataProvider {
 }
 
 abstract class ScheduledDataProvider(
-    context : Context,
+    val workManager: WorkManager,
     val timeProvider: TimeProvider,
-    scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+    val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
     val client: OkHttpClient = OkHttpClient.Builder() .callTimeout(Duration.ofSeconds(30)) .build()
 ) : DataProvider {
 
     protected val events = MutableSharedFlow<List<VEvent>>(replay = 1)
+    private var _isActive: Boolean
 
     companion object {
         @Volatile
-        private lateinit var _instance: ScheduledDataProvider
+        private var _instance: ScheduledDataProvider? = null
 
-        private var _isActive = false
     }
 
     init {
         _instance = this
-        _isActive  = true
-
-        scope.launch {
-            scheduleNextRefresh(context.applicationContext)
-
-            val now = timeProvider.now()
-            if(now.hour < 18) {
-                refresh(now)
-            } else {
-                refresh(now.plusDays(1))
-            }
-        }
-
+        _isActive = false
     }
 
     override suspend fun refresh(now: LocalDateTime) {
@@ -76,7 +64,25 @@ abstract class ScheduledDataProvider(
         }
     }
 
-    override fun today(): SharedFlow<List<VEvent>> = events
+    override fun today(): SharedFlow<List<VEvent>> {
+
+        if (!_isActive) {
+            scope.launch {
+                _isActive = true
+
+                scheduleNextRefresh(workManager)
+
+                val now = timeProvider.now()
+                if (now.hour < 18) {
+                    refresh(now)
+                } else {
+                    refresh(now.plusDays(1))
+                }
+            }
+        }
+
+        return events
+    }
 
     class CalendarRefreshWorker(
         context: Context,
@@ -85,20 +91,22 @@ abstract class ScheduledDataProvider(
 
         override suspend fun doWork(): Result {
             try {
-                if (!_isActive or (_instance == null)) {
+                if (_instance == null || _instance?._isActive == false) {
                     Log.e("iCalDataProvider", "No instance of DataProvider found for refresh")
                     return Result.failure()
                 }
 
-                _instance.scheduleNextRefresh(applicationContext)
+                _instance?.scheduleNextRefresh(
+                    WorkManager.getInstance(applicationContext)
+                )
 
-                val timeProvider = _instance.timeProvider
+                val timeProvider = _instance?.timeProvider ?: return Result.failure()
 
                 val now = timeProvider.now()
                 if(now.hour < 18) {
-                    _instance.refresh(now)
+                    _instance?.refresh(now)
                 } else {
-                    _instance.refresh(now.plusDays(1))
+                    _instance?.refresh(now.plusDays(1))
                 }
 
                 return Result.success()
@@ -110,7 +118,7 @@ abstract class ScheduledDataProvider(
     }
 
 
-    fun scheduleNextRefresh(context: Context) {
+    fun scheduleNextRefresh(workManager: WorkManager) {
         val now = timeProvider.now()
         val thisEvening = now.toLocalDate().atStartOfDay().plusHours(18)
         val nextMorning = now.toLocalDate().atStartOfDay().plusDays(1).plusHours(6)
@@ -126,7 +134,7 @@ abstract class ScheduledDataProvider(
             .addTag("com.iceiony.visualcalendar")
             .build()
 
-        WorkManager.getInstance(context).enqueue( work )
+        workManager.enqueue( work )
     }
 
     abstract suspend fun getDaysEvents(now: LocalDateTime): List<VEvent>

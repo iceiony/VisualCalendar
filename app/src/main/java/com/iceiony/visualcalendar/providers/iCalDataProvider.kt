@@ -2,6 +2,7 @@ package com.iceiony.visualcalendar.providers
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.work.WorkManager
 import biweekly.Biweekly
 import biweekly.component.VEvent
 import com.iceiony.visualcalendar.BuildConfig
@@ -27,7 +28,10 @@ class iCalDataProvider(
     timeProvider: TimeProvider = SystemTimeProvider(),
     scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
     private val iCalUrl: String = BuildConfig.ICAL_DEBUG_URL,
-) : ScheduledDataProvider(context, timeProvider, scope) {
+) : ScheduledDataProvider(
+    workManager = WorkManager.getInstance(context.applicationContext),
+    timeProvider, scope
+) {
 
 override suspend fun getDaysEvents(now: LocalDateTime): List<VEvent> {
     val request = Request.Builder().url(iCalUrl).get().build()

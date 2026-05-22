@@ -6,35 +6,25 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.os.Bundle
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
-import android.widget.FrameLayout
-import android.util.Log
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import com.iceiony.visualcalendar.providers.DataProvider
-import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 
 class CalendarAccessibilityService :
     AccessibilityService(),
     androidx.lifecycle.LifecycleOwner,
     androidx.savedstate.SavedStateRegistryOwner
 {
-
-    companion object {
-        lateinit var dataProvider: DataProvider
-    }
-
     private var calendarView: ComposeView? = null
     private var windowManager: WindowManager? = null
     private var homePackages = setOf(
@@ -59,8 +49,6 @@ class CalendarAccessibilityService :
         savedStateRegistryController.performAttach()
         savedStateRegistryController.performRestore(savedStateBundle)
 
-        dataProvider = GoogleCalendarDataProvider(this)
-
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
     }
 
@@ -72,7 +60,9 @@ class CalendarAccessibilityService :
         calendarView = ComposeView(this).apply{
             setViewTreeSavedStateRegistryOwner(this@CalendarAccessibilityService)
             setViewTreeLifecycleOwner(this@CalendarAccessibilityService)
-            setContent { CalendarDayView(dataProvider) }
+            setContent {
+                CalendarDayView(VisualCalendarApp.instance.dataProvider)
+            }
         }
 
         calendarView?.visibility = View.GONE
@@ -140,8 +130,6 @@ class CalendarAccessibilityService :
     }
 
     override fun onDestroy() {
-        dataProvider.destroy()
-
         savedStateBundle = Bundle().apply {
             savedStateRegistryController.performSave(this)
         }

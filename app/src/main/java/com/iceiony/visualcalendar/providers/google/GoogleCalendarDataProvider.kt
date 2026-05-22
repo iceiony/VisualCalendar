@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
+import androidx.work.WorkManager
 import biweekly.component.VEvent
 import com.iceiony.visualcalendar.SystemTimeProvider
 import com.iceiony.visualcalendar.TimeProvider
@@ -29,7 +30,10 @@ class GoogleCalendarDataProvider(
     val authProvider: AuthProvider = GoogleAuthProvider(context),
     scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
     client: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder().callTimeout(java.time.Duration.ofSeconds(30)).build()
-) : ScheduledDataProvider(context, timeProvider, scope , client) {
+) : ScheduledDataProvider(
+    workManager = WorkManager.getInstance(context.applicationContext),
+    timeProvider, scope , client
+) {
     val prefs = context.getSharedPreferences("google_calendar", Context.MODE_PRIVATE)
 
     override suspend fun calendars(): Map<String, String> {

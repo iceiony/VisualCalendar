@@ -2,9 +2,11 @@ package com.iceiony.visualcalendar
 
 import android.content.Context
 import android.os.Build
+import android.os.Looper
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.testing.WorkManagerTestInitHelper
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -14,18 +16,27 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowWindowManagerImpl
+import androidx.test.espresso.intent.Intents
+import kotlinx.coroutines.test.runTest
+import org.robolectric.Shadows.shadowOf
 
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.S])
 class CalendarAccessibilityServiceTest {
 
+    private lateinit var context: Context
+
     @Before
     fun setup() {
+        context = ApplicationProvider.getApplicationContext<Context>()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        Intents.init()
     }
 
     @After
     fun tearDown() {
+        Intents.release()
     }
 
     @Test
@@ -109,6 +120,9 @@ class CalendarAccessibilityServiceTest {
         assert(view?.visibility == android.view.View.GONE) {
             "Overlay view should still be visible on the lock screen"
         }
+
+        service.onDestroy()
+
     }
 
 }

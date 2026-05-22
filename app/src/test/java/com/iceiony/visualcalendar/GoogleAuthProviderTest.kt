@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent
+import androidx.work.testing.WorkManagerTestInitHelper
 import app.cash.turbine.test
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.testutil.TestInterceptor
@@ -33,7 +34,7 @@ class GoogleAuthProviderTest {
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext<Context>()
-
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
         Intents.init()
     }
 
