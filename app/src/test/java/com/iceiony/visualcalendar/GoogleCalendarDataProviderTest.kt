@@ -7,35 +7,26 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
-import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
-import app.cash.turbine.testIn
 import app.cash.turbine.turbineScope
-import biweekly.component.VEvent
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.TestTimeProvider
-import io.reactivex.rxjava3.schedulers.TestScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDateTime
-import java.util.concurrent.TimeUnit
 import kotlin.intArrayOf
 
 
@@ -242,22 +233,22 @@ class GoogleCalendarDataProviderTest {
             .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
 
         turbineScope {
-            val eventsFlow = dataProvider.today().testIn(this)
-            val timeFlow = dataProvider.today()
+            val eventsSource = dataProvider.today().testIn(this)
+            val timeSource = dataProvider.today()
                 .map({ timeProvider.now() })
                 .testIn(this)
 
-            val initialEvents = eventsFlow.awaitItem()
-            val initialTime = timeFlow.awaitItem()
+            val initialEvents = eventsSource.awaitItem()
+            val initialTime = timeSource.awaitItem()
 
             assert(initialEvents == null) {
                 "Expected initial events to be null before first refresh, but got $initialEvents."
             }
 
-            val eventsYesterday = eventsFlow.awaitItem()
+            val eventsYesterday = eventsSource.awaitItem()
                 ?: throw AssertionError("Expected to receive list of events, but got null.")
 
-            val timeYesterday = timeFlow.awaitItem()
+            val timeYesterday = timeSource.awaitItem()
 
             assert(eventsYesterday.isNotEmpty()) {
                 "Expected to have events published, but nothing was published."
@@ -274,9 +265,9 @@ class GoogleCalendarDataProviderTest {
                 LocalDateTime.of(2026, 2, 21, 6, 0, 1)
             )
 
-            val eventsToday = eventsFlow.awaitItem()
+            val eventsToday = eventsSource.awaitItem()
                 ?: throw AssertionError("Expected to receive list of events after refresh, but got null.")
-            val timeToday = timeFlow.awaitItem()
+            val timeToday = timeSource.awaitItem()
 
             assert(timeToday != timeYesterday) {
                 "Expected time to have advanced."
@@ -293,41 +284,46 @@ class GoogleCalendarDataProviderTest {
                 "All events should still be within next day's date range."
             }
 
-            eventsFlow.cancel()
-            timeFlow.cancel()
+            eventsSource.cancel()
+            timeSource.cancel()
 
         }
 
     }
 
-    //@Test
-    //fun `re-occurring calendar events show up`() {
-    //    val testScheduler = TestScheduler()
-    //    val timeProvider = TestTimeProvider(
-    //        now = LocalDateTime.of(2026, 2, 23, 19, 7),
-    //        scheduler = testScheduler,
-    //        context = context
-    //    )
+    @Test
+    fun `re-occurring calendar events show up`() = runTest {
+        val timeProvider = TestTimeProvider(
+            now = LocalDateTime.of(2026, 2, 23, 19, 7),
+            context = context, scheduler = testScheduler
+        )
 
-    //    val dataProvider = GoogleCalendarDataProvider(context,timeProvider, testScheduler)
+        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
 
-    //    timeProvider.advanceTimeBy(0)
+        dataProvider.today().test {
+            assert(awaitItem() == null) {
+                "Expected initial value to be null before first refresh, but got non-null value."
+            }
 
-    //    val events = dataProvider.today(context).test()
+            val events = awaitItem()
+                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
-    //    assert(events.values().last().isNotEmpty()) {
-    //        "Expected next days' events to have been published."
-    //    }
+            assert(events.isNotEmpty()) {
+                "Expected next days' events to have been published."
+            }
 
-    //    val dayStart = java.time.LocalDate.of(2026, 2, 24).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-    //    val dayEnd   = java.time.LocalDate.of(2026, 2, 25).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+            val dayStart = java.time.LocalDate.of(2026, 2, 24)
+                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+            val dayEnd = java.time.LocalDate.of(2026, 2, 25)
+                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
 
-    //    assert(events.values().last().all { event ->
-    //        val start = event.dateStart.value.toInstant()
-    //        start.isAfter(dayStart) && start.isBefore(dayEnd)
-    //    }) {
-    //        "All events should be within next day's date range."
-    //    }
-    //}
+            assert(events.all { event ->
+                val start = event.dateStart.value.toInstant()
+                start.isAfter(dayStart) && start.isBefore(dayEnd)
+            }) {
+                "All events should be within next day's date range."
+            }
+        }
+    }
 
 }

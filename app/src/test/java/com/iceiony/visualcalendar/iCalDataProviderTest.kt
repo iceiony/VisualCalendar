@@ -5,11 +5,16 @@ import android.os.Build
 import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
+import androidx.work.impl.schedulers
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
+import app.cash.turbine.test
+import app.cash.turbine.turbineScope
 import com.iceiony.visualcalendar.providers.iCalDataProvider
 import com.iceiony.visualcalendar.testutil.TestTimeProvider
 import io.reactivex.rxjava3.schedulers.TestScheduler
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -40,181 +45,205 @@ class iCalDataProviderTest {
     @After
     fun tearDown() { }
 
-    //@Test
-    //fun `can subscribe to calendar events`() {
-    //    val testScheduler = TestScheduler()
-    //    val dataProvider = iCalDataProvider(scheduler = testScheduler)
+    @Test
+    fun `can subscribe to calendar events`() = runTest {
+        val dataProvider = iCalDataProvider(context)
 
-    //    val eventsStream = dataProvider.today(context).test()
+        dataProvider.today().test {
+            assert(awaitItem() == null) {
+                "Expected initial value to be null before first refresh, but got non-null value."
+            }
 
-    //    testScheduler.advanceTimeBy(0, TimeUnit.SECONDS)
+            val events = awaitItem() ?: throw AssertionError("Expected to receive list of events, but got null.")
 
-    //    println("Events for today:")
-    //    eventsStream.values().last().forEach { event ->
-    //        println("- ${event.summary.value} at ${event.dateStart.value} - ${event.dateEnd.value}")
-    //    }
-    //}
+            println("Events for today:")
+            events.forEach { event ->
+                println("- ${event.summary.value} at ${event.dateStart.value} - ${event.dateEnd.value}")
+            }
+        }
 
-    //@Test
-    //fun `can get today's events before 6pm`() {
-    //    val testScheduler = TestScheduler()
-    //    val timeProvider = TestTimeProvider(
-    //        now = LocalDateTime.of(2026, 2, 21, 7, 10),
-    //        scheduler = testScheduler,
-    //        context = context
-    //    )
+    }
 
-    //    val dataProvider = iCalDataProvider(timeProvider, testScheduler)
+    @Test
+    fun `can get today's events before 6pm`()  = runTest{
+        val timeProvider = TestTimeProvider(
+            now = LocalDateTime.of(2026, 2, 21, 7, 10),
+            context = context, scheduler = testScheduler
+        )
 
-    //    timeProvider.advanceTimeBy(0)
+        val dataProvider = iCalDataProvider(context, timeProvider)
+        dataProvider.today().test {
+            assert(awaitItem() == null) {
+                "Expected initial value to be null before first refresh, but got non-null value."
+            }
 
-    //    val events = dataProvider.today(context).test()
+            val events = awaitItem()
+                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
-    //    assert(events.values().isNotEmpty()) {
-    //        "Expected to have published today's events, but nothing was published."
-    //    }
+            assert(events.isNotEmpty()) {
+                "Expected to have published today's events, but nothing was published."
+            }
 
-    //    assert(events.values().last().isNotEmpty()) {
-    //        "Expected to find some events for the day, but found none."
-    //    }
+            val dayStart = java.time.LocalDate.of(2026, 2, 21)
+                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+            val dayEnd = java.time.LocalDate.of(2026, 2, 22)
+                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
 
-    //    val dayStart = java.time.LocalDate.of(2026, 2, 21).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-    //    val dayEnd   = java.time.LocalDate.of(2026, 2, 22).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+            assert(events.all { event ->
+                val start = event.dateStart.value.toInstant()
+                start.isAfter(dayStart) && start.isBefore(dayEnd)
+            }) {
+                "All events should be within today's date range."
+            }
+        }
+    }
 
-    //    assert(events.values().first().all { event ->
-    //        val start = event.dateStart.value.toInstant()
-    //        start.isAfter(dayStart) && start.isBefore(dayEnd)
-    //    }) {
-    //        "All events should be within today's date range."
-    //    }
-    //}
+    @Test
+    fun `can get tomorrow's events after 6pm`() = runTest{
+        val timeProvider = TestTimeProvider(
+            now = LocalDateTime.of(2026, 2, 20, 17, 30),
+            context = context, scheduler = testScheduler
+        )
 
-    //@Test
-    //fun `can get tomorrow's events after 6pm`() {
-    //    val testScheduler = TestScheduler()
-    //    val timeProvider = TestTimeProvider(
-    //        now = LocalDateTime.of(2026, 2, 20, 17, 30),
-    //        scheduler = testScheduler,
-    //        context = context
-    //    )
+        val dataProvider = iCalDataProvider(context, timeProvider)
 
-    //    val dataProvider = iCalDataProvider(timeProvider, testScheduler)
+        timeProvider.advanceTimeBy(0)
 
-    //    timeProvider.advanceTimeBy(0)
+        dataProvider.today().test {
+            assert(awaitItem() == null) {
+                "Expected initial value to be null before first refresh, but got non-null value."
+            }
 
-    //    val events = dataProvider.today(context).test()
+            var events = awaitItem()
+                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
-    //    assert(events.values().last().isEmpty()) {
-    //        "Not expecting any events for the day. Test not setup correctly."
-    //    }
+            assert(events.isEmpty()) {
+                "Not expecting any events for the day. Test not setup correctly."
+            }
 
-    //    timeProvider.advanceTimeBy( 60 * 30 + 1) // 18:00:01
+            timeProvider.advanceTimeBy(60 * 30 + 1) // 18:00:01
 
-    //    assert(events.values().last().isNotEmpty()) {
-    //        "Expected next days' events to have been published."
-    //    }
+            events = awaitItem()
+                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
-    //    val dayStart = java.time.LocalDate.of(2026, 2, 21).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-    //    val dayEnd   = java.time.LocalDate.of(2026, 2, 22).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+            assert(events.isNotEmpty()) {
+                "Expected next days' events to have been published."
+            }
 
-    //    assert(events.values().last().all { event ->
-    //        val start = event.dateStart.value.toInstant()
-    //        start.isAfter(dayStart) && start.isBefore(dayEnd)
-    //    }) {
-    //        "All events should be within next day's date range."
-    //    }
-    //}
+            val dayStart = java.time.LocalDate.of(2026, 2, 21)
+                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+            val dayEnd = java.time.LocalDate.of(2026, 2, 22)
+                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
 
-    //@Test
-    //fun `the event list is refreshed in the morning`() {
-    //    val testScheduler = TestScheduler()
-    //    val timeProvider = TestTimeProvider(
-    //        now = LocalDateTime.of(2026, 2, 20, 18, 1),
-    //        scheduler = testScheduler,
-    //        context = context
-    //    )
+            assert(events.all { event ->
+                val start = event.dateStart.value.toInstant()
+                start.isAfter(dayStart) && start.isBefore(dayEnd)
+            }) {
+                "All events should be within next day's date range."
+            }
+        }
+    }
 
-    //    val dataProvider = iCalDataProvider(timeProvider, testScheduler)
+    @Test
+    fun `the event list is refreshed in the morning`() = runTest {
+        val timeProvider = TestTimeProvider(
+            now = LocalDateTime.of(2026, 2, 20, 18, 1),
+            context = context, scheduler = testScheduler
+        )
 
-    //    timeProvider.advanceTimeBy(0)
+        val dataProvider = iCalDataProvider(context, timeProvider)
 
-    //    val eventsSource = dataProvider.today(context)
+        val dayStart = java.time.LocalDate.of(2026, 2, 21).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+        val dayEnd   = java.time.LocalDate.of(2026, 2, 22).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
 
-    //    val events = eventsSource.test()
-    //    val eventTime = eventsSource.map { timeProvider.now() }.test()
+        turbineScope {
+            val eventsSource = dataProvider.today().testIn(this)
+            val timeSource = dataProvider.today()
+                .map({ timeProvider.now() })
+                .testIn(this)
 
-    //    assert(events.values().isNotEmpty()) {
-    //        "Expected to have events published, but nothing was published."
-    //    }
+            val initialEvents = eventsSource.awaitItem()
+            val initialTime = timeSource.awaitItem()
 
-    //    val eventsYesterday = events.values().last()
-    //    val timeYesterday   = eventTime.values().last()
+            assert(initialEvents == null) {
+                "Expected initial events to be null before first refresh, but got $initialEvents."
+            }
 
-    //    assert(eventsYesterday.isNotEmpty()) {
-    //        "Expected to find next day's events but found none."
-    //    }
+            val eventsYesterday = eventsSource.awaitItem()
+                ?: throw AssertionError("Expected to receive list of events, but got null.")
+            val timeYesterday = timeSource.awaitItem()
 
-    //    val dayStart = java.time.LocalDate.of(2026, 2, 21).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-    //    val dayEnd   = java.time.LocalDate.of(2026, 2, 22).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+            assert(eventsYesterday.isNotEmpty()) {
+                "Expected to find next day's events but found none."
+            }
 
-    //    assert(eventsYesterday.all { event ->
-    //        val start = event.dateStart.value.toInstant()
-    //        start.isAfter(dayStart) && start.isBefore(dayEnd)
-    //    }) {
-    //        "All events should be within next day's date range."
-    //    }
+            assert(eventsYesterday.all { event ->
+                val start = event.dateStart.value.toInstant()
+                start.isAfter(dayStart) && start.isBefore(dayEnd)
+            }) {
+                "All events should be within next day's date range."
+            }
 
-    //    timeProvider.advanceTimeTo(
-    //        LocalDateTime.of(2026, 2, 21, 6, 0, 1)
-    //    )
+            timeProvider.advanceTimeTo(
+                LocalDateTime.of(2026, 2, 21, 6, 0, 1)
+            )
 
-    //    val eventsToday = events.values().last()
-    //    val timeToday   = eventTime.values().last()
+            val eventsToday = eventsSource.awaitItem()
+                ?: throw AssertionError("Expected to receive list of events, but got null.")
+            val timeToday = timeSource.awaitItem()
 
-    //    assert( timeToday != timeYesterday) {
-    //        "Expected time to have advanced."
-    //    }
+            assert(timeToday != timeYesterday) {
+                "Expected time to have advanced."
+            }
 
-    //    assert(eventsYesterday.size == eventsToday.size) {
-    //        "Expected to have same number of events after refresh, but had ${eventsYesterday.size} before and ${eventsToday.size} after."
-    //    }
+            assert(eventsYesterday.size == eventsToday.size) {
+                "Expected to have same number of events after refresh, but had ${eventsYesterday.size} before and ${eventsToday.size} after."
+            }
 
-    //    assert(eventsToday.all { event ->
-    //        val start = event.dateStart.value.toInstant()
-    //        start.isAfter(dayStart) && start.isBefore(dayEnd)
-    //    }) {
-    //        "All events should still be within next day's date range."
-    //    }
+            assert(eventsToday.all { event ->
+                val start = event.dateStart.value.toInstant()
+                start.isAfter(dayStart) && start.isBefore(dayEnd)
+            }) {
+                "All events should still be within next day's date range."
+            }
 
-    //}
+            eventsSource.cancel()
+            timeSource.cancel()
+        }
+    }
 
-    //@Test
-    //fun `re-occurring calendar events show up`() {
-    //    val testScheduler = TestScheduler()
-    //    val timeProvider = TestTimeProvider(
-    //        now = LocalDateTime.of(2026, 2, 23, 19, 7),
-    //        scheduler = testScheduler,
-    //        context = context
-    //    )
+    @Test
+    fun `re-occurring calendar events show up`() = runTest {
+        val timeProvider = TestTimeProvider(
+            now = LocalDateTime.of(2026, 2, 23, 19, 7),
+            context = context, scheduler = testScheduler
+        )
 
-    //    val dataProvider = iCalDataProvider(timeProvider, testScheduler)
+        val dataProvider = iCalDataProvider(context, timeProvider)
 
-    //    timeProvider.advanceTimeBy(0)
+        dataProvider.today().test {
+            assert(awaitItem() == null) {
+                "Expected initial value to be null before first refresh, but got non-null value."
+            }
 
-    //    val events = dataProvider.today(context).test()
+            val events = awaitItem()
+                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
-    //    assert(events.values().last().isNotEmpty()) {
-    //        "Expected next days' events to have been published."
-    //    }
+            assert(events.isNotEmpty()) {
+                "Expected next days' events to have been published."
+            }
 
-    //    val dayStart = java.time.LocalDate.of(2026, 2, 24).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-    //    val dayEnd   = java.time.LocalDate.of(2026, 2, 25).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+            val dayStart = java.time.LocalDate.of(2026, 2, 24)
+                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+            val dayEnd = java.time.LocalDate.of(2026, 2, 25)
+                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
 
-    //    assert(events.values().last().all { event ->
-    //        val start = event.dateStart.value.toInstant()
-    //        start.isAfter(dayStart) && start.isBefore(dayEnd)
-    //    }) {
-    //        "All events should be within next day's date range."
-    //    }
-    //}
+            assert(events.all { event ->
+                val start = event.dateStart.value.toInstant()
+                start.isAfter(dayStart) && start.isBefore(dayEnd)
+            }) {
+                "All events should be within next day's date range."
+            }
+        }
+    }
 }
