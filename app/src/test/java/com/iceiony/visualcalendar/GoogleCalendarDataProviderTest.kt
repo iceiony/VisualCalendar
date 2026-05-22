@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.setMain
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -34,28 +35,21 @@ import kotlin.intArrayOf
 @Config(sdk = [Build.VERSION_CODES.S])
 @OptIn(ExperimentalCoroutinesApi::class)
 class GoogleCalendarDataProviderTest {
+    private lateinit var context: Context
 
     companion object {
         var authProvider: GoogleAuthProvider = GoogleAuthProvider()
     }
 
-    private lateinit var context: Context
-
     @Before
     fun setup()  = runTest {
         Dispatchers.setMain(StandardTestDispatcher())
 
-
         context = ApplicationProvider.getApplicationContext<Context>()
 
-        val config = Configuration.Builder()
-            .setMinimumLoggingLevel(Log.DEBUG)
-            .setExecutor(SynchronousExecutor())
-            .build();
-
-        WorkManagerTestInitHelper.initializeTestWorkManager(context, config);
-
         if(!authProvider.isAuthorised()) {
+            WorkManagerTestInitHelper.initializeTestWorkManager(context);
+
             authProvider.setAuthState(
                 """
                 {
@@ -82,60 +76,69 @@ class GoogleCalendarDataProviderTest {
 
     @Test
     fun `can retrieve the list of calendars the user has access to`() = runTest {
-        val dataProvider = GoogleCalendarDataProvider(authProvider = authProvider)
+        val dataProvider = GoogleCalendarDataProvider(context, authProvider = authProvider)
 
-        val calendars = dataProvider.calendars()
+        try {
+            val calendars = dataProvider.calendars()
 
-        assert(calendars.isNotEmpty()) {
-            "Expected to retrieve at least one calendar, but got none."
-        }
+            assert(calendars.isNotEmpty()) {
+                "Expected to retrieve at least one calendar, but got none."
+            }
 
-        //expect more than one
-        assert(calendars.size > 1) {
-            "Expected to retrieve more than one calendar, but got ${calendars.size}."
+            //expect more than one
+            assert(calendars.size > 1) {
+                "Expected to retrieve more than one calendar, but got ${calendars.size}."
+            }
+        } finally {
+            dataProvider.destroy()
         }
     }
 
     @Test
     fun `defaults to the first calendar when no calendar main is configured`() = runTest {
-        val dataProvider = GoogleCalendarDataProvider(authProvider = authProvider)
+        val dataProvider = GoogleCalendarDataProvider(context, authProvider = authProvider)
 
-        val calendars = dataProvider.calendars()
+        try {
+            val calendars = dataProvider.calendars()
 
-        assert(calendars.size > 2) {
-            "Test setup incorrect, authorisation should be an account with access to more than 1 calendar"
-        }
+            assert(calendars.size > 2) {
+                "Test setup incorrect, authorisation should be an account with access to more than 1 calendar"
+            }
 
-        assert( calendars.keys.first() == dataProvider.getMainCalendar()) {
-            "Expected selected calendar ID to be ${calendars.keys.first()}, but got ${dataProvider.getMainCalendar()}."
-        }
+            assert( calendars.keys.first() == dataProvider.getMainCalendar()) {
+                "Expected selected calendar ID to be ${calendars.keys.first()}, but got ${dataProvider.getMainCalendar()}."
+            }
 
-        dataProvider.setMainCalendar(calendars.keys.last())
+            dataProvider.setMainCalendar(calendars.keys.last())
 
-        assert( calendars.keys.first() != dataProvider.getMainCalendar()) {
-            "Expected selected calendar ID to have changed"
-        }
+            assert( calendars.keys.first() != dataProvider.getMainCalendar()) {
+                "Expected selected calendar ID to have changed"
+            }
 
-        assert( calendars.keys.last() == dataProvider.getMainCalendar()) {
-            "Expected selected calendar ID to be ${calendars.keys.last()}, but got ${dataProvider.getMainCalendar()}."
+            assert( calendars.keys.last() == dataProvider.getMainCalendar()) {
+                "Expected selected calendar ID to be ${calendars.keys.last()}, but got ${dataProvider.getMainCalendar()}."
+            }
+        } finally {
+            dataProvider.destroy()
         }
 
     }
 
     @Test
     fun `can subscribe to calendar events`()  = runTest {
-        val dataProvider = GoogleCalendarDataProvider(
-            context,
-            authProvider = authProvider,
-        )
+        val dataProvider = GoogleCalendarDataProvider( context, authProvider = authProvider )
 
-        dataProvider.today().test {
-            val events = awaitItem()
+        try {
+            dataProvider.today().test {
+                val events = awaitItem()
 
-            println("Events for today:")
-            events.forEach { event ->
-                println("- ${event.summary.value} at ${event.dateStart.value} - ${event.dateEnd.value}")
+                println("Events for today:")
+                events.forEach { event ->
+                    println("- ${event.summary.value} at ${event.dateStart.value} - ${event.dateEnd.value}")
+                }
             }
+        } finally {
+            dataProvider.destroy()
         }
     }
 
@@ -148,22 +151,28 @@ class GoogleCalendarDataProviderTest {
 
         val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
 
-        dataProvider.today().test {
-            val events = awaitItem()
+        try {
+            dataProvider.today().test {
+                val events = awaitItem()
 
-            assert(events.isNotEmpty()) {
-                "Expected to have published today's events, but nothing was published."
+                assert(events.isNotEmpty()) {
+                    "Expected to have published today's events, but nothing was published."
+                }
+
+                val dayStart = java.time.LocalDate.of(2026, 2, 21)
+                    .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+                val dayEnd = java.time.LocalDate.of(2026, 2, 22)
+                    .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+
+                assert(events.all { event ->
+                    val start = event.dateStart.value.toInstant()
+                    start.isAfter(dayStart) && start.isBefore(dayEnd)
+                }) {
+                    "All events should be within today's date range."
+                }
             }
-
-            val dayStart = java.time.LocalDate.of(2026, 2, 21).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-            val dayEnd   = java.time.LocalDate.of(2026, 2, 22).atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-
-            assert(events.all { event ->
-                val start = event.dateStart.value.toInstant()
-                start.isAfter(dayStart) && start.isBefore(dayEnd)
-            }) {
-                "All events should be within today's date range."
-            }
+        } finally {
+            dataProvider.destroy()
         }
     }
 
@@ -176,33 +185,37 @@ class GoogleCalendarDataProviderTest {
 
         val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
 
-        dataProvider.today().test {
-            var events = awaitItem()
+        try {
+            dataProvider.today().test {
+                var events = awaitItem()
 
-            assert(events.isEmpty()) {
-                "Not expecting any events for the day. Test not setup correctly."
+                assert(events.isEmpty()) {
+                    "Not expecting any events for the day. Test not setup correctly."
+                }
+
+                timeProvider.advanceTimeBy(60 * 30 + 1) // 18:00:01
+
+                events = awaitItem()
+                    ?: throw AssertionError("Expected to receive list of events after time advanced, but got null.")
+
+                assert(events.isNotEmpty()) {
+                    "Expected next days' events to have been published."
+                }
+
+                val dayStart = java.time.LocalDate.of(2026, 2, 21)
+                    .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+                val dayEnd = java.time.LocalDate.of(2026, 2, 22)
+                    .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+
+                assert(events.all { event ->
+                    val start = event.dateStart.value.toInstant()
+                    start.isAfter(dayStart) && start.isBefore(dayEnd)
+                }) {
+                    "All events should be within next day's date range."
+                }
             }
-
-            timeProvider.advanceTimeBy(60 * 30 + 1) // 18:00:01
-
-            events = awaitItem()
-                ?: throw AssertionError("Expected to receive list of events after time advanced, but got null.")
-
-            assert(events.isNotEmpty()) {
-                "Expected next days' events to have been published."
-            }
-
-            val dayStart = java.time.LocalDate.of(2026, 2, 21)
-                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-            val dayEnd = java.time.LocalDate.of(2026, 2, 22)
-                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-
-            assert(events.all { event ->
-                val start = event.dateStart.value.toInstant()
-                start.isAfter(dayStart) && start.isBefore(dayEnd)
-            }) {
-                "All events should be within next day's date range."
-            }
+        } finally {
+            dataProvider.destroy()
         }
     }
 
@@ -220,52 +233,56 @@ class GoogleCalendarDataProviderTest {
         val dayEnd = java.time.LocalDate.of(2026, 2, 22)
             .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
 
-        turbineScope {
-            val eventsSource = dataProvider.today().testIn(this)
-            val timeSource = dataProvider.today()
-                .map({ timeProvider.now() })
-                .testIn(this)
+        try {
+            turbineScope {
+                val eventsSource = dataProvider.today().testIn(this)
+                val timeSource = dataProvider.today()
+                    .map({ timeProvider.now() })
+                    .testIn(this)
 
-            val eventsYesterday = eventsSource.awaitItem()
+                val eventsYesterday = eventsSource.awaitItem()
 
-            val timeYesterday = timeSource.awaitItem()
+                val timeYesterday = timeSource.awaitItem()
 
-            assert(eventsYesterday.isNotEmpty()) {
-                "Expected to have events published, but nothing was published."
+                assert(eventsYesterday.isNotEmpty()) {
+                    "Expected to have events published, but nothing was published."
+                }
+
+                assert(eventsYesterday.all { event ->
+                    val start = event.dateStart.value.toInstant()
+                    start.isAfter(dayStart) && start.isBefore(dayEnd)
+                }) {
+                    "All events should be within next day's date range."
+                }
+
+                timeProvider.advanceTimeTo(
+                    LocalDateTime.of(2026, 2, 21, 6, 0, 1)
+                )
+
+                val eventsToday = eventsSource.awaitItem()
+                val timeToday = timeSource.awaitItem()
+
+                assert(timeToday != timeYesterday) {
+                    "Expected time to have advanced."
+                }
+
+                assert(eventsYesterday.size == eventsToday.size) {
+                    "Expected to have same number of events after refresh, but had ${eventsYesterday.size} before and ${eventsToday.size} after."
+                }
+
+                assert(eventsToday.all { event ->
+                    val start = event.dateStart.value.toInstant()
+                    start.isAfter(dayStart) && start.isBefore(dayEnd)
+                }) {
+                    "All events should still be within next day's date range."
+                }
+
+                eventsSource.cancel()
+                timeSource.cancel()
+
             }
-
-            assert(eventsYesterday.all { event ->
-                val start = event.dateStart.value.toInstant()
-                start.isAfter(dayStart) && start.isBefore(dayEnd)
-            }) {
-                "All events should be within next day's date range."
-            }
-
-            timeProvider.advanceTimeTo(
-                LocalDateTime.of(2026, 2, 21, 6, 0, 1)
-            )
-
-            val eventsToday = eventsSource.awaitItem()
-            val timeToday = timeSource.awaitItem()
-
-            assert(timeToday != timeYesterday) {
-                "Expected time to have advanced."
-            }
-
-            assert(eventsYesterday.size == eventsToday.size) {
-                "Expected to have same number of events after refresh, but had ${eventsYesterday.size} before and ${eventsToday.size} after."
-            }
-
-            assert(eventsToday.all { event ->
-                val start = event.dateStart.value.toInstant()
-                start.isAfter(dayStart) && start.isBefore(dayEnd)
-            }) {
-                "All events should still be within next day's date range."
-            }
-
-            eventsSource.cancel()
-            timeSource.cancel()
-
+        } finally {
+            dataProvider.destroy()
         }
 
     }
@@ -279,24 +296,28 @@ class GoogleCalendarDataProviderTest {
 
         val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
 
-        dataProvider.today().test {
-            val events = awaitItem()
+        try {
+            dataProvider.today().test {
+                val events = awaitItem()
 
-            assert(events.isNotEmpty()) {
-                "Expected next days' events to have been published."
+                assert(events.isNotEmpty()) {
+                    "Expected next days' events to have been published."
+                }
+
+                val dayStart = java.time.LocalDate.of(2026, 2, 24)
+                    .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+                val dayEnd = java.time.LocalDate.of(2026, 2, 25)
+                    .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
+
+                assert(events.all { event ->
+                    val start = event.dateStart.value.toInstant()
+                    start.isAfter(dayStart) && start.isBefore(dayEnd)
+                }) {
+                    "All events should be within next day's date range."
+                }
             }
-
-            val dayStart = java.time.LocalDate.of(2026, 2, 24)
-                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-            val dayEnd = java.time.LocalDate.of(2026, 2, 25)
-                .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
-
-            assert(events.all { event ->
-                val start = event.dateStart.value.toInstant()
-                start.isAfter(dayStart) && start.isBefore(dayEnd)
-            }) {
-                "All events should be within next day's date range."
-            }
+        } finally {
+            dataProvider.destroy()
         }
     }
 
