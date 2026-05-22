@@ -6,9 +6,10 @@ import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import kotlin.lazy
 
 class VisualCalendarApp : Application() {
-    val dataProvider: DataProvider by lazy {
+    private val dataProviderLazy = lazy {
         GoogleCalendarDataProvider(applicationContext)
     }
+    val dataProvider: DataProvider by dataProviderLazy
 
     companion object {
         lateinit var instance: VisualCalendarApp
@@ -22,6 +23,8 @@ class VisualCalendarApp : Application() {
 
     override fun onTerminate() {
         super.onTerminate()
-        dataProvider.destroy()
+        if (dataProviderLazy.isInitialized()) {
+            dataProvider.destroy()
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.iceiony.visualcalendar
 
 import android.content.Context
 import android.os.Build
+import android.os.StrictMode
 import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
@@ -34,16 +35,21 @@ class iCalDataProviderTest {
     fun setup() {
         context = ApplicationProvider.getApplicationContext<Context>()
 
-        val config = Configuration.Builder()
-            .setMinimumLoggingLevel(Log.DEBUG)
-            .setExecutor(SynchronousExecutor())
-            .build();
+        WorkManagerTestInitHelper.initializeTestWorkManager(context);
 
-        WorkManagerTestInitHelper.initializeTestWorkManager(context, config);
+        //try to detect memory leaks in tests.
+        //StrictMode.setVmPolicy(
+        //    StrictMode.VmPolicy.Builder()
+        //        .detectLeakedClosableObjects()
+        //        .penaltyLog()
+        //        .build()
+        //)
     }
 
     @After
-    fun tearDown() { }
+    fun tearDown() {
+
+    }
 
     @Test
     fun `can subscribe to calendar events`() = runTest {

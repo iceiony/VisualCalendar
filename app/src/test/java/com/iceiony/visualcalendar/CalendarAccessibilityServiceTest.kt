@@ -36,6 +36,7 @@ class CalendarAccessibilityServiceTest {
 
     @After
     fun tearDown() {
+        shadowOf(Looper.getMainLooper()).idle()
         Intents.release()
     }
 

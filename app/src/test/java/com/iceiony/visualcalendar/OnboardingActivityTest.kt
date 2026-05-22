@@ -6,6 +6,7 @@ import kotlinx.coroutines.test.runTest
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Looper
 import android.provider.Settings
 import androidx.activity.result.ActivityResult
 import androidx.compose.ui.test.isOn
@@ -19,6 +20,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
@@ -30,6 +32,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
 import org.robolectric.shadows.ShadowToast
@@ -49,12 +52,12 @@ class OnboardingActivityTest {
 
         application = ApplicationProvider.getApplicationContext<Application>()
 
-        //ShadowSettings.setCanDrawOverlays(false)
-        //ShadowSettings.ShadowSecure.reset();
+        WorkManagerTestInitHelper.initializeTestWorkManager(application)
     }
 
     @After
     fun tearDown() {
+        shadowOf(Looper.getMainLooper()).idle()
         Intents.release()
     }
 

@@ -44,6 +44,7 @@ abstract class ScheduledDataProvider(
 
     protected val events = MutableSharedFlow<List<VEvent>>(replay = 1)
     private var _isActive: Boolean
+    private var pendingWork: java.util.UUID? = null
 
     companion object {
         @Volatile
@@ -135,12 +136,17 @@ abstract class ScheduledDataProvider(
             .build()
 
         workManager.enqueue( work )
+
+        pendingWork = work.id
     }
 
     abstract suspend fun getDaysEvents(now: LocalDateTime): List<VEvent>
 
     override fun destroy(){
         _isActive = false
+        pendingWork?.let {
+            workManager.cancelWorkById(it)
+        }
     }
 }
 

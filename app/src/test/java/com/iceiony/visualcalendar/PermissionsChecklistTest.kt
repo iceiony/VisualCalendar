@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import kotlinx.coroutines.test.runTest
 import androidx.test.core.app.ApplicationProvider
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.AuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
@@ -55,6 +56,7 @@ class PermissionsChecklistTest {
     fun setup() {
         Dispatchers.setMain(StandardTestDispatcher())
         application = ApplicationProvider.getApplicationContext<Application>()
+        WorkManagerTestInitHelper.initializeTestWorkManager(application)
     }
 
     @After
