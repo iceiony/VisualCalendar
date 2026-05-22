@@ -5,15 +5,22 @@ import biweekly.component.VEvent
 import com.iceiony.visualcalendar.providers.DataProvider
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.subjects.ReplaySubject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.ZoneId.systemDefault
 import java.util.Date
 
 class PreviewDataProvider(
-    private var testEvents: List<List<VEvent>>
+    private var testEvents: List<List<VEvent>>,
+    scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : DataProvider {
 
     companion object {
@@ -38,13 +45,12 @@ class PreviewDataProvider(
     }
 
     private var idx = -1
-    private val subject: MutableStateFlow<List<VEvent>>
+    private val subject = MutableSharedFlow<List<VEvent>>(replay = 1)
 
     init {
-        idx++
-        subject = MutableStateFlow<List<VEvent>>(
-            testEvents.getOrNull(idx) ?: emptyList()
-        )
+        scope.launch {
+            publishNext()
+        }
     }
 
     suspend fun publishNext() {
@@ -52,7 +58,7 @@ class PreviewDataProvider(
         subject.emit(testEvents.getOrNull(idx) ?: emptyList())
     }
 
-    override fun today(): StateFlow<List<VEvent>> = subject
+    override fun today(): SharedFlow<List<VEvent>> = subject
 
     override suspend fun refresh(now : LocalDateTime) {
         subject.emit(testEvents.getOrNull(idx) ?: emptyList())
@@ -66,7 +72,7 @@ class PreviewDataProvider(
         )
     }
 
-    override suspend fun getMainCalendar(): String? {
+    override suspend fun getMainCalendar(): String {
         return "calendar_1"
     }
 

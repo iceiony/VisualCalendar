@@ -36,13 +36,13 @@ fun CalendarDayView(
     timeProvider: TimeProvider = SystemTimeProvider(),
     modifier: Modifier = Modifier
 ) {
-    val events by dataProvider.today().collectAsState()
+    val events by dataProvider.today().collectAsState(emptyList())
 
     val now by remember {
         dataProvider.today().map { timeProvider.now() }
     }.collectAsState(initial = timeProvider.now())
 
-    val title = if(timeProvider.now().hour < 18) {
+    val title = if(now.hour < 18) {
         "It's " + now.toLocalDate().dayOfWeek.name
     } else {
         val tomorrow =  now.toLocalDate().atStartOfDay().plusDays(1)
@@ -70,7 +70,7 @@ fun CalendarDayView(
         }
 
 
-        events?.forEach { event ->
+        events.forEach { event ->
 
             Box(
                 modifier = Modifier.fillMaxWidth().padding(top = 2.dp)

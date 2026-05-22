@@ -50,11 +50,7 @@ class iCalDataProviderTest {
         val dataProvider = iCalDataProvider(context)
 
         dataProvider.today().test {
-            assert(awaitItem() == null) {
-                "Expected initial value to be null before first refresh, but got non-null value."
-            }
-
-            val events = awaitItem() ?: throw AssertionError("Expected to receive list of events, but got null.")
+            val events = awaitItem()
 
             println("Events for today:")
             events.forEach { event ->
@@ -73,12 +69,7 @@ class iCalDataProviderTest {
 
         val dataProvider = iCalDataProvider(context, timeProvider)
         dataProvider.today().test {
-            assert(awaitItem() == null) {
-                "Expected initial value to be null before first refresh, but got non-null value."
-            }
-
             val events = awaitItem()
-                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
             assert(events.isNotEmpty()) {
                 "Expected to have published today's events, but nothing was published."
@@ -110,12 +101,7 @@ class iCalDataProviderTest {
         timeProvider.advanceTimeBy(0)
 
         dataProvider.today().test {
-            assert(awaitItem() == null) {
-                "Expected initial value to be null before first refresh, but got non-null value."
-            }
-
             var events = awaitItem()
-                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
             assert(events.isEmpty()) {
                 "Not expecting any events for the day. Test not setup correctly."
@@ -124,7 +110,6 @@ class iCalDataProviderTest {
             timeProvider.advanceTimeBy(60 * 30 + 1) // 18:00:01
 
             events = awaitItem()
-                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
             assert(events.isNotEmpty()) {
                 "Expected next days' events to have been published."
@@ -162,15 +147,7 @@ class iCalDataProviderTest {
                 .map({ timeProvider.now() })
                 .testIn(this)
 
-            val initialEvents = eventsSource.awaitItem()
-            val initialTime = timeSource.awaitItem()
-
-            assert(initialEvents == null) {
-                "Expected initial events to be null before first refresh, but got $initialEvents."
-            }
-
             val eventsYesterday = eventsSource.awaitItem()
-                ?: throw AssertionError("Expected to receive list of events, but got null.")
             val timeYesterday = timeSource.awaitItem()
 
             assert(eventsYesterday.isNotEmpty()) {
@@ -189,7 +166,6 @@ class iCalDataProviderTest {
             )
 
             val eventsToday = eventsSource.awaitItem()
-                ?: throw AssertionError("Expected to receive list of events, but got null.")
             val timeToday = timeSource.awaitItem()
 
             assert(timeToday != timeYesterday) {
@@ -222,12 +198,7 @@ class iCalDataProviderTest {
         val dataProvider = iCalDataProvider(context, timeProvider)
 
         dataProvider.today().test {
-            assert(awaitItem() == null) {
-                "Expected initial value to be null before first refresh, but got non-null value."
-            }
-
             val events = awaitItem()
-                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
             assert(events.isNotEmpty()) {
                 "Expected next days' events to have been published."

@@ -130,11 +130,7 @@ class GoogleCalendarDataProviderTest {
         )
 
         dataProvider.today().test {
-            assert(awaitItem() == null) {
-                "Expected initial value to be null before first refresh, but got non-null value."
-            }
-
-            val events = awaitItem() ?: throw AssertionError("Expected to receive list of events, but got null.")
+            val events = awaitItem()
 
             println("Events for today:")
             events.forEach { event ->
@@ -153,11 +149,7 @@ class GoogleCalendarDataProviderTest {
         val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
 
         dataProvider.today().test {
-            assert(awaitItem() == null) {
-                "Expected initial value to be null before first refresh, but got non-null value."
-            }
-
-            val events = awaitItem() ?: throw AssertionError("Expected to receive list of events, but got null.")
+            val events = awaitItem()
 
             assert(events.isNotEmpty()) {
                 "Expected to have published today's events, but nothing was published."
@@ -185,11 +177,7 @@ class GoogleCalendarDataProviderTest {
         val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
 
         dataProvider.today().test {
-            assert(awaitItem() == null) {
-                "Expected initial value to be null before first refresh, but got non-null value."
-            }
-
-            var events = awaitItem() ?: throw AssertionError("Expected to receive list of events, but got null.")
+            var events = awaitItem()
 
             assert(events.isEmpty()) {
                 "Not expecting any events for the day. Test not setup correctly."
@@ -238,15 +226,7 @@ class GoogleCalendarDataProviderTest {
                 .map({ timeProvider.now() })
                 .testIn(this)
 
-            val initialEvents = eventsSource.awaitItem()
-            val initialTime = timeSource.awaitItem()
-
-            assert(initialEvents == null) {
-                "Expected initial events to be null before first refresh, but got $initialEvents."
-            }
-
             val eventsYesterday = eventsSource.awaitItem()
-                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
             val timeYesterday = timeSource.awaitItem()
 
@@ -266,7 +246,6 @@ class GoogleCalendarDataProviderTest {
             )
 
             val eventsToday = eventsSource.awaitItem()
-                ?: throw AssertionError("Expected to receive list of events after refresh, but got null.")
             val timeToday = timeSource.awaitItem()
 
             assert(timeToday != timeYesterday) {
@@ -301,12 +280,7 @@ class GoogleCalendarDataProviderTest {
         val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
 
         dataProvider.today().test {
-            assert(awaitItem() == null) {
-                "Expected initial value to be null before first refresh, but got non-null value."
-            }
-
             val events = awaitItem()
-                ?: throw AssertionError("Expected to receive list of events, but got null.")
 
             assert(events.isNotEmpty()) {
                 "Expected next days' events to have been published."

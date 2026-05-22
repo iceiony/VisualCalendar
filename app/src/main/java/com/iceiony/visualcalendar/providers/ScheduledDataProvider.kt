@@ -13,7 +13,9 @@ import com.iceiony.visualcalendar.TimeProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -23,7 +25,7 @@ import java.time.LocalDateTime
 import java.util.Date
 
 interface DataProvider {
-    fun today(): StateFlow<List<VEvent>?>
+    fun today(): SharedFlow<List<VEvent>>
     suspend fun refresh(now: LocalDateTime)
 
     suspend fun calendars(): Map<String, String>
@@ -40,7 +42,7 @@ abstract class ScheduledDataProvider(
     val client: OkHttpClient = OkHttpClient.Builder() .callTimeout(Duration.ofSeconds(30)) .build()
 ) : DataProvider {
 
-    protected val events = MutableStateFlow<List<VEvent>?>(null)
+    protected val events = MutableSharedFlow<List<VEvent>>(replay = 1)
 
     companion object {
         @Volatile
@@ -74,7 +76,7 @@ abstract class ScheduledDataProvider(
         }
     }
 
-    override fun today(): StateFlow<List<VEvent>?> = events
+    override fun today(): SharedFlow<List<VEvent>> = events
 
     class CalendarRefreshWorker(
         context: Context,

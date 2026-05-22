@@ -193,8 +193,9 @@ class CalendarDayViewTest {
         timeProvider.advanceTimeTo(tomorrow_morning)
         dataProvider.refresh(timeProvider.now())
 
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText("It's FRIDAY").assertExists()
         composeTestRule.onNodeWithText("Friday event 1").assertExists()
     }
 }
-
