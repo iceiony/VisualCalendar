@@ -151,7 +151,20 @@ class GoogleAuthProvider(
         ).execute()
 
         val json = JSONObject(response.body?.string() ?: throw Exception("Empty refresh response"))
-        if (json.has("error")) throw Exception("Token refresh failed: ${json.getString("error")}")
+        if (json.has("error")) {
+            //check if token revoked
+            if (json.getString("error") == "invalid_grant") {
+                Log.w("GoogleAuthProvider", "Refresh token invalid, clearing auth state")
+                
+                withContext(NonCancellable) {
+                    clearAuthState()
+                }
+
+                return getValidAccessToken()
+            }
+
+            throw Exception("Token refresh failed: ${json.getString("error")}")
+        }
 
         withContext(NonCancellable) {
             prefs.edit {
