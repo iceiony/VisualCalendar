@@ -12,8 +12,21 @@ class CalendarDayActivity : ComponentActivity() {
         Log.d("CalendarDayActivity", "onCreate called")
         super.onCreate(savedInstanceState)
 
-        setContent {
-            CalendarDayView(VisualCalendarApp.instance.dataProvider)
+        if (!Permissions.allGranted(this)) {
+            Log.d("CalendarDayActivity", "Permissions not granted, redirecting to PermissionsActivity")
+
+            startActivity(
+                Intent(this, OnboardingActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            )
+
+            finish()
+
+        } else {
+            setContent {
+                CalendarDayView(VisualCalendarApp.instance.dataProvider)
+            }
         }
 
     }

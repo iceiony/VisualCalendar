@@ -53,7 +53,7 @@ class GoogleAuthProvider(
                 userCode = json.getString("user_code"),
                 verificationUrl = json.getString("verification_url"),
                 intervalSeconds = json.getInt("interval"),
-                expiresIn = json.getLong("expires_in")
+                expiresIn = json.getLong("expires_in"),
             )
 
             send(deviceCode)

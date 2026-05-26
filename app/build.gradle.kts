@@ -55,7 +55,6 @@ android {
 dependencies {
     implementation(libs.google.tink.android)
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.datastore.preferences.rxjava3) // only if using RxJava
     implementation(libs.androidx.security.crypto.ktx)
 
     implementation(libs.zxing)
@@ -65,11 +64,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.activity.compose)
-
-    implementation(libs.rxjava)
-    implementation(libs.rxkotlin)
-    implementation(libs.rxandroid)
-    implementation(libs.kotlinx.coroutines.rx3)
 
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.work.runtime.ktx)
@@ -89,6 +83,7 @@ dependencies {
     implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.androidx.datastore.tink)
     implementation(libs.androidx.foundation)
+    implementation(libs.places)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

@@ -1,33 +1,31 @@
 package com.iceiony.visualcalendar.providers.google
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import androidx.work.WorkManager
 import biweekly.component.VEvent
 import com.iceiony.visualcalendar.SystemTimeProvider
 import com.iceiony.visualcalendar.TimeProvider
-import io.reactivex.rxjava3.core.Scheduler
-import io.reactivex.rxjava3.schedulers.Schedulers
-import java.time.LocalDateTime
 import com.iceiony.visualcalendar.VisualCalendarApp
-import com.iceiony.visualcalendar.providers.ScheduledDataProvider
-import okhttp3.Request
 import com.iceiony.visualcalendar.providers.AuthProvider
+import com.iceiony.visualcalendar.providers.ScheduledDataProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import okhttp3.Request
 import org.json.JSONObject
 import java.net.URLEncoder
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.util.Date
 
 class GoogleCalendarDataProvider(
     context: Context = VisualCalendarApp.instance.applicationContext,
     timeProvider: TimeProvider = SystemTimeProvider(),
-    val authProvider: AuthProvider = GoogleAuthProvider(context),
+    val authProvider: AuthProvider = VisualCalendarApp.instance.authProvider,
     scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
     client: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder().callTimeout(java.time.Duration.ofSeconds(30)).build()
 ) : ScheduledDataProvider(
@@ -38,6 +36,10 @@ class GoogleCalendarDataProvider(
 
     override suspend fun calendars(): Map<String, String> {
         val token = authProvider.getValidAccessToken()
+
+        if (token.isNullOrEmpty()) {
+            return emptyMap()
+        }
 
         //https://www.googleapis.com/calendar/v3/users/me/calendarList
         val response = client.newCall(
@@ -52,7 +54,7 @@ class GoogleCalendarDataProvider(
 
         val items = JSONObject(body).getJSONArray("items")
 
-        Log.i("GoogleCalendarDataProvider", "Received calendar list response: $body")
+        Log.i("GoogleCalendarDataProvider", "Received calendar list response.")
 
         return (0 until items.length()).map { i ->
             val item = items.getJSONObject(i)
@@ -64,6 +66,11 @@ class GoogleCalendarDataProvider(
 
     override suspend fun getDaysEvents(now: LocalDateTime): List<VEvent> {
         val token = authProvider.getValidAccessToken()
+
+        if (token.isNullOrEmpty()) {
+            return emptyList()
+        }
+
         val mainCalendar = getMainCalendar()
 
         val zone = ZoneId.systemDefault()
@@ -104,7 +111,11 @@ class GoogleCalendarDataProvider(
         return try {
             Date.from(Instant.parse(dateStr))
         } catch (e: Exception) {
-            Date.from(java.time.LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault()).toInstant())
+            try {
+                Date.from(OffsetDateTime.parse(dateStr).toInstant())
+            } catch (e: Exception) {
+                Date.from(java.time.LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault()).toInstant())
+            }
         }
     }
 
@@ -130,11 +141,7 @@ class GoogleCalendarDataProvider(
 
     override suspend fun getMainCalendar() : String {
         if (!prefs.contains("calendar_id")){
-            val calendarList = calendars()
-
-            if (calendarList.isEmpty()) throw Exception("No calendars found for user")
-
-            setMainCalendar(calendarList.keys.first())
+            return ""
         }
 
         return prefs.getString("calendar_id", null) ?: throw Exception("No calendar selected")

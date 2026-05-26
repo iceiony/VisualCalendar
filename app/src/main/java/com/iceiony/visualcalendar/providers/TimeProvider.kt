@@ -1,6 +1,5 @@
 package com.iceiony.visualcalendar
 
-import io.reactivex.rxjava3.core.Observable
 import java.time.LocalDateTime
 
 interface TimeProvider {

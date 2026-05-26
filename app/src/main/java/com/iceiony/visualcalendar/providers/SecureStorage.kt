@@ -14,7 +14,7 @@ import com.iceiony.visualcalendar.VisualCalendarApp
 import kotlinx.coroutines.flow.first
 
 class SecureStorage(
-    private val context: Context = VisualCalendarApp.Companion.instance.applicationContext
+    private val context: Context = VisualCalendarApp.instance.applicationContext
 ) {
     init {
         AeadConfig.register()

@@ -33,8 +33,8 @@ import java.time.LocalDateTime
 @Composable
 fun CalendarDayView(
     dataProvider: DataProvider,
-    timeProvider: TimeProvider = SystemTimeProvider(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    timeProvider: TimeProvider = SystemTimeProvider()
 ) {
     val events by dataProvider.today().collectAsState(emptyList())
 

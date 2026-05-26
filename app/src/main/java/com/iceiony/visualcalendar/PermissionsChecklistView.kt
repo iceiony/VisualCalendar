@@ -2,9 +2,6 @@ package com.iceiony.visualcalendar
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Color
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -34,29 +30,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.iceiony.visualcalendar.providers.AuthProvider
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.qrcode.QRCodeWriter
-import androidx.core.graphics.createBitmap
-import androidx.core.graphics.set
 import biweekly.component.VEvent
 import com.iceiony.visualcalendar.providers.DataProvider
 import com.iceiony.visualcalendar.viewmodels.PermissionsViewModel
-import io.reactivex.rxjava3.core.Observable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import java.time.LocalDateTime
 
-
-fun generateQrCode(content: String, sizePx: Int): Bitmap {
-    val bits = QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, sizePx, sizePx)
-    val bmp = createBitmap(sizePx, sizePx, Bitmap.Config.RGB_565)
-    for (x in 0 until sizePx)
-        for (y in 0 until sizePx)
-            bmp[x, y] = if (bits[x, y]) Color.BLACK else Color.WHITE
-    return bmp
-}
 
 @Composable
 fun PermissionsChecklistView(
@@ -157,13 +139,8 @@ private fun QrCodeChallenge(
     if (deviceCodeResponse != null) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        val qrBitmap = remember(deviceCodeResponse) {
-            val qrContent = "${deviceCodeResponse.verificationUrl}?user_code=${deviceCodeResponse.userCode}"
-            generateQrCode(qrContent, 400)
-        }
-
         Image(
-            bitmap = qrBitmap.asImageBitmap(),
+            bitmap = deviceCodeResponse.qrBitmap.asImageBitmap(),
             contentDescription = "Device authorization QR code",
             modifier = Modifier.size(200.dp)
         )

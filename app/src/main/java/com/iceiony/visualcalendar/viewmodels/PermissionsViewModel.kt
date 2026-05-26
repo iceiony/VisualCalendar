@@ -19,19 +19,21 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.application
+import com.iceiony.visualcalendar.VisualCalendarApp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 
 class PermissionsViewModel(
     application: Application,
-    val authProvider: AuthProvider = GoogleAuthProvider(application),
-    val dataProvider: DataProvider = GoogleCalendarDataProvider(application, authProvider = authProvider)
+    val authProvider: AuthProvider = VisualCalendarApp.instance.authProvider,
+    val dataProvider: DataProvider = VisualCalendarApp.instance.dataProvider
 ) : AndroidViewModel(application) {
 
     constructor(application: Application) : this(
         application,
-        authProvider = GoogleAuthProvider(application),
-        dataProvider = GoogleCalendarDataProvider(application, authProvider = GoogleAuthProvider(application))
+        authProvider = VisualCalendarApp.instance.authProvider,
+        dataProvider = VisualCalendarApp.instance.dataProvider
     )
 
     //individual permission fields
@@ -100,9 +102,7 @@ class PermissionsViewModel(
     }
 
     private fun requestOverlayPermissions() {
-        val intent = Intent(
-            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-        )
+        val intent = Intent( Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
 
         overlayCaller?.launch(intent)
 
@@ -136,7 +136,7 @@ class PermissionsViewModel(
 
     init {
         //authentication tracking
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             if(!isCalendarAccessGranted) {
                 authProvider
                     .requestDeviceCode()
