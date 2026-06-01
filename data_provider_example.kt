@@ -92,20 +92,6 @@ class GoogleCalendarDataProvider(
         }
     }
 
-    private fun extractImageUrl(item: JSONObject): String? {
-        if (item.has("attachments")) {
-            val attachments = item.getJSONArray("attachments")
-            for (i in 0 until attachments.length()) {
-                val attachment = attachments.getJSONObject(i)
-                if (attachment.optString("mimeType").startsWith("image/")) {
-                    return attachment.optString("fileUrl").takeIf { it.isNotEmpty() }
-                }
-            }
-        }
-        val description = item.optString("description")
-        return Regex("""\[image](https?://\S+)""").find(description)?.groupValues?.get(1)
-    }
-
     override fun refresh(now: LocalDateTime) {
         Observable
             .fromCallable { getDaysEvents(now) }

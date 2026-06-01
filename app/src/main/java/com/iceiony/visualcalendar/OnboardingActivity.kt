@@ -1,6 +1,7 @@
 package com.iceiony.visualcalendar
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,6 +16,7 @@ class OnboardingActivity : ComponentActivity() {
     val viewModel: PermissionsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.i("OnboardingActivity", "onCreate called")
         super.onCreate(savedInstanceState)
 
         if (Permissions.allGranted(application)) {

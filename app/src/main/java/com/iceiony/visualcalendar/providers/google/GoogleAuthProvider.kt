@@ -10,7 +10,9 @@ import okhttp3.OkHttpClient
 import java.time.Duration
 import androidx.core.content.edit
 import com.iceiony.visualcalendar.BuildConfig
+import com.iceiony.visualcalendar.Permissions
 import com.iceiony.visualcalendar.providers.AuthProvider
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.sync.withLock
 
 class GoogleAuthProvider(
     val context: Context = VisualCalendarApp.instance.applicationContext,
@@ -32,7 +35,13 @@ class GoogleAuthProvider(
 ) : AuthProvider {
     val prefs = context.getSharedPreferences("google_auth", Context.MODE_PRIVATE)
 
+    private var loginDeferred: CompletableDeferred<Boolean>? = null
+
     override fun requestDeviceCode(): Flow<AuthProvider.DeviceCodeInfo> = channelFlow {
+        if(loginDeferred == null) {
+            loginDeferred = CompletableDeferred()
+        }
+
         while (currentCoroutineContext().isActive) {
             val response = client.newCall(
                 Request.Builder()
@@ -111,19 +120,27 @@ class GoogleAuthProvider(
             return setAuthState(json)
         }
 
-        return false
+        return true
     }
 
     override suspend fun getValidAccessToken(): String? {
         //check if expiry token exists
-        if( !prefs.contains("token_expiry") ) {
-            //launch onboarding activity
+        if(
+            !isAuthorised() && loginDeferred == null
+        ) {
+            loginDeferred = CompletableDeferred()
             context.startActivity(
                 Intent(context, OnboardingActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
             )
+             delay(1000L * 5)
+        }
 
+        loginDeferred?.await()
+
+        if ( !isAuthorised() ) {
+            Log.w("GoogleAuthProvider", "Not authorized after login attempt")
             return null
         }
 
@@ -194,6 +211,9 @@ class GoogleAuthProvider(
 
         secureStorage.saveValue("access_token", json.getString("access_token"))
         secureStorage.saveValue("refresh_token", json.getString("refresh_token"))
+
+        loginDeferred?.complete(true)
+        loginDeferred = null
 
         return true
     }

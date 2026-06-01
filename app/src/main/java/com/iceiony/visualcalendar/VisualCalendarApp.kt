@@ -1,6 +1,7 @@
 package com.iceiony.visualcalendar
 
 import android.app.Application
+import android.util.Log
 import com.iceiony.visualcalendar.providers.DataProvider
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
@@ -23,6 +24,7 @@ class VisualCalendarApp : Application() {
     }
 
     override fun onCreate() {
+        Log.i("VisualCalendarApp", "Application onCreate called")
         super.onCreate()
         instance = this
     }

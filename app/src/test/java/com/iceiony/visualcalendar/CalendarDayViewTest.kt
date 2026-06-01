@@ -54,7 +54,7 @@ class CalendarDayViewTest {
         val dataProvider = iCalDataProvider( context , timeProvider)
 
         composeTestRule.setContent {
-            CalendarDayView( dataProvider, timeProvider )
+            CalendarDayView( dataProvider, timeProvider = timeProvider )
         }
 
         val today = timeProvider.now()
@@ -70,7 +70,7 @@ class CalendarDayViewTest {
         val dataProvider = iCalDataProvider( context , timeProvider)
 
         composeTestRule.setContent {
-            CalendarDayView( dataProvider, timeProvider )
+            CalendarDayView( dataProvider, timeProvider = timeProvider )
         }
 
         val tomorrow = timeProvider.now().toLocalDate().atStartOfDay().plusDays(1)

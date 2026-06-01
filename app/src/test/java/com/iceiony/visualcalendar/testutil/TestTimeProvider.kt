@@ -5,7 +5,6 @@ import androidx.work.WorkManager
 import androidx.work.testing.TestDriver
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.preview.PreviewTimeProvider
-import io.reactivex.rxjava3.schedulers.TestScheduler
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import java.time.LocalDateTime
 

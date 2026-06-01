@@ -77,8 +77,6 @@ class PermissionsViewModel(
                     Toast.LENGTH_SHORT)
                 .show()
 
-        } else if ( !isAccessibilityServiceEnabled ) {
-            requestAccessibilityPermissions()
         }
 
         checkAllPermissions()
@@ -94,14 +92,12 @@ class PermissionsViewModel(
                     "Permission not granted for accessibility service",
                     Toast.LENGTH_SHORT)
                 .show()
-        } else if (!isOverlayPermissionGranted) {
-            requestOverlayPermissions()
         }
 
         checkAllPermissions()
     }
 
-    private fun requestOverlayPermissions() {
+    fun requestOverlayPermissions() {
         val intent = Intent( Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
 
         overlayCaller?.launch(intent)
@@ -114,7 +110,7 @@ class PermissionsViewModel(
 
     }
 
-    private fun requestAccessibilityPermissions() {
+    fun requestAccessibilityPermissions() {
         val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
 
         accessibilityCaller?.launch(intent)
@@ -134,7 +130,7 @@ class PermissionsViewModel(
                isCalendarAccessGranted &&
                isCalendarSelected )
 
-    init {
+    fun start() {
         //authentication tracking
         viewModelScope.launch(Dispatchers.IO) {
             if(!isCalendarAccessGranted) {
@@ -146,7 +142,6 @@ class PermissionsViewModel(
             calendars = dataProvider.calendars()
             isCalendarAccessGranted = authProvider.isAuthorised()
             checkAllPermissions()
-
         }
         //overlay and accessibility access
     }
@@ -159,15 +154,4 @@ class PermissionsViewModel(
 
         return allGranted
     }
-
-    fun start() {
-        if (!isOverlayPermissionGranted) {
-            requestOverlayPermissions()
-        } else if (!isAccessibilityServiceEnabled ) {
-            requestAccessibilityPermissions()
-        }
-
-        checkAllPermissions()
-    }
-
 }

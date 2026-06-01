@@ -67,6 +67,7 @@ fun PermissionsChecklistView(
         PermissionRow(
             header = "Overlay Permission" ,
             checked = viewModel.isOverlayPermissionGranted,
+            onClick = { viewModel.requestOverlayPermissions() },
         ){
             Text("Required to display calendar overlay on top of other apps.")
         }
@@ -74,6 +75,7 @@ fun PermissionsChecklistView(
         PermissionRow(
             header = "Accessibility Service Permission" ,
             checked = viewModel.isAccessibilityServiceEnabled,
+            onClick = { viewModel.requestAccessibilityPermissions() },
         ){
             Text("Required to detect when to show/hide the calendar overlay based on the foreground app.")
         }

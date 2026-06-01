@@ -3,18 +3,13 @@ package com.iceiony.visualcalendar
 import android.content.Context
 import android.os.Build
 import android.os.StrictMode
-import android.util.Log
 import androidx.test.core.app.ApplicationProvider
-import androidx.work.Configuration
 import androidx.work.WorkManager
-import androidx.work.impl.schedulers
-import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.iceiony.visualcalendar.providers.iCalDataProvider
 import com.iceiony.visualcalendar.testutil.TestTimeProvider
-import io.reactivex.rxjava3.schedulers.TestScheduler
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -24,7 +19,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDateTime
-import java.util.concurrent.TimeUnit
 
 
 @RunWith(RobolectricTestRunner::class)

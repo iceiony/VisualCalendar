@@ -37,10 +37,6 @@ class GoogleCalendarDataProvider(
     override suspend fun calendars(): Map<String, String> {
         val token = authProvider.getValidAccessToken()
 
-        if (token.isNullOrEmpty()) {
-            return emptyMap()
-        }
-
         //https://www.googleapis.com/calendar/v3/users/me/calendarList
         val response = client.newCall(
             Request.Builder()
@@ -67,7 +63,8 @@ class GoogleCalendarDataProvider(
     override suspend fun getDaysEvents(now: LocalDateTime): List<VEvent> {
         val token = authProvider.getValidAccessToken()
 
-        if (token.isNullOrEmpty()) {
+        if( token.isNullOrEmpty()) {
+            Log.e("GoogleCalendarDataProvider", "No valid access token available.")
             return emptyList()
         }
 
