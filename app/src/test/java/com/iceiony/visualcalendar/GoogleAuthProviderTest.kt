@@ -81,10 +81,22 @@ class GoogleAuthProviderTest {
 
     //        println("Please visit ${deviceCode.verificationUrl} and enter the code: ${deviceCode.userCode}")
 
+    //        //sleep for 60 seconds to allow time for authorisation
+    //        Thread.sleep(60_000)
+
+    //        println("access_token: " + authProvider.secureStorage.getValue("access_token"))
+    //        println("refresh_token: " + authProvider.secureStorage.getValue("refresh_token"))
+
     //        awaitItem()
+
+    //        println("access_token: " + authProvider.secureStorage.getValue("access_token"))
+    //        println("refresh_token: " + authProvider.secureStorage.getValue("refresh_token"))
     //    }
 
     //    advanceUntilIdle()
+
+    //    println("access_token: " + authProvider.secureStorage.getValue("access_token"))
+    //    println("refresh_token: " + authProvider.secureStorage.getValue("refresh_token"))
     //}
 
     @Test

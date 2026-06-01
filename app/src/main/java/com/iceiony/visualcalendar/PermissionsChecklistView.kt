@@ -225,7 +225,7 @@ fun PermissionsChecklistPreview() {
         override fun today(): StateFlow<List<VEvent>> {
             return MutableStateFlow<List<VEvent>>(emptyList())
         }
-        override suspend fun refresh(now: LocalDateTime) {}
+        override suspend fun refresh(now: LocalDateTime?) {}
         override fun setMainCalendar(calendarId: String) { }
         override fun destroy() { }
 

@@ -58,6 +58,11 @@ class PermissionsViewModel(
     val calendarSelectionCallback: (String) -> Unit = { calendarId ->
         dataProvider.setMainCalendar(calendarId)
         mainCalendar = calendarId
+
+        viewModelScope.launch {
+            dataProvider.refresh()
+        }
+
         isCalendarSelected = true
         checkAllPermissions()
     }
@@ -140,6 +145,8 @@ class PermissionsViewModel(
             }
 
             calendars = dataProvider.calendars()
+            mainCalendar = dataProvider.getMainCalendar()
+
             isCalendarAccessGranted = authProvider.isAuthorised()
             checkAllPermissions()
         }

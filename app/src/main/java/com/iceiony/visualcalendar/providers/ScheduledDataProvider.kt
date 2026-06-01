@@ -26,13 +26,13 @@ import java.util.Date
 
 interface DataProvider {
     fun today(): SharedFlow<List<VEvent>>
-    suspend fun refresh(now: LocalDateTime)
 
     suspend fun calendars(): Map<String, String>
 
     suspend fun getMainCalendar() : String?
     fun setMainCalendar(calendarId: String)
     fun destroy()
+    suspend fun refresh(now: LocalDateTime? = null)
 }
 
 abstract class ScheduledDataProvider(
@@ -61,11 +61,19 @@ abstract class ScheduledDataProvider(
         _isActive = false
     }
 
-    override suspend fun refresh(now: LocalDateTime) {
-        try {
-            events.emit(getDaysEvents(now))
-        } catch (e: Exception) {
-            Log.e("ScheduledDataProvider", "Error refreshing events", e)
+    override suspend fun refresh(now: LocalDateTime?) {
+        scope.launch {
+            var target = now ?: timeProvider.now()
+
+            if (target.hour >= 18) {
+                target = target.plusDays(1)
+            }
+
+            try {
+                events.emit(getDaysEvents(target))
+            } catch (e: Exception) {
+                Log.e("ScheduledDataProvider", "Error refreshing events", e)
+            }
         }
     }
 
@@ -74,15 +82,8 @@ abstract class ScheduledDataProvider(
         if (!_isActive) {
             scope.launch {
                 _isActive = true
-
                 scheduleNextRefresh(workManager)
-
-                val now = timeProvider.now()
-                if (now.hour < 18) {
-                    refresh(now)
-                } else {
-                    refresh(now.plusDays(1))
-                }
+                refresh()
             }
         }
 
@@ -107,12 +108,7 @@ abstract class ScheduledDataProvider(
 
                 val timeProvider = _instance?.timeProvider ?: return Result.failure()
 
-                val now = timeProvider.now()
-                if(now.hour < 18) {
-                    _instance?.refresh(now)
-                } else {
-                    _instance?.refresh(now.plusDays(1))
-                }
+                _instance?.refresh()
 
                 return Result.success()
             } catch (e: Exception) {

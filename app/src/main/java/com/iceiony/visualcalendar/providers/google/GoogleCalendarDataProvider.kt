@@ -13,6 +13,7 @@ import com.iceiony.visualcalendar.providers.ScheduledDataProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import okhttp3.Request
 import org.json.JSONObject
 import java.net.URLEncoder
@@ -64,11 +65,16 @@ class GoogleCalendarDataProvider(
         val token = authProvider.getValidAccessToken()
 
         if( token.isNullOrEmpty()) {
-            Log.e("GoogleCalendarDataProvider", "No valid access token available.")
+            Log.w("GoogleCalendarDataProvider", "No valid access token available.")
             return emptyList()
         }
 
         val mainCalendar = getMainCalendar()
+
+        if (mainCalendar.isNullOrEmpty()) {
+            Log.w("GoogleCalendarDataProvider", "No main calendar set. Returning empty event list.")
+            return emptyList()
+        }
 
         val zone = ZoneId.systemDefault()
         val dayStart = now.toLocalDate().atStartOfDay(zone).toInstant()
@@ -136,9 +142,9 @@ class GoogleCalendarDataProvider(
         }
     }
 
-    override suspend fun getMainCalendar() : String {
+    override suspend fun getMainCalendar() : String? {
         if (!prefs.contains("calendar_id")){
-            return ""
+            return null
         }
 
         return prefs.getString("calendar_id", null) ?: throw Exception("No calendar selected")

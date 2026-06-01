@@ -38,6 +38,7 @@ class OnboardingActivity : ComponentActivity() {
         }
 
         viewModel.start()
+
     }
 
     private fun registerPermissionsLaunchers() {

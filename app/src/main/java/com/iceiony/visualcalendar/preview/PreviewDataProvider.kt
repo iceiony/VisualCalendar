@@ -54,7 +54,7 @@ class PreviewDataProvider(
 
     override fun today(): SharedFlow<List<VEvent>> = subject
 
-    override suspend fun refresh(now : LocalDateTime) {
+    override suspend fun refresh(now : LocalDateTime?) {
         subject.emit(testEvents.getOrNull(idx) ?: emptyList())
     }
 
