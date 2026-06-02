@@ -5,15 +5,14 @@ import android.util.Log
 import androidx.core.content.edit
 import androidx.work.WorkManager
 import biweekly.component.VEvent
-import com.iceiony.visualcalendar.SystemTimeProvider
-import com.iceiony.visualcalendar.TimeProvider
+import com.iceiony.visualcalendar.providers.SystemTimeProvider
+import com.iceiony.visualcalendar.providers.TimeProvider
 import com.iceiony.visualcalendar.VisualCalendarApp
 import com.iceiony.visualcalendar.providers.AuthProvider
 import com.iceiony.visualcalendar.providers.ScheduledDataProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import okhttp3.Request
 import org.json.JSONObject
 import java.net.URLEncoder

@@ -1,7 +1,6 @@
-package com.iceiony.visualcalendar.preview
+package com.iceiony.visualcalendar.providers
 
 import biweekly.component.VEvent
-import com.iceiony.visualcalendar.providers.DataProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

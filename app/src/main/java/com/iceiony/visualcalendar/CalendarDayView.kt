@@ -11,24 +11,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.iceiony.visualcalendar.preview.PreviewDataProvider
-import com.iceiony.visualcalendar.preview.PreviewTimeProvider
 import com.iceiony.visualcalendar.providers.DataProvider
-import com.iceiony.visualcalendar.providers.iCalDataProvider
+import com.iceiony.visualcalendar.providers.SystemTimeProvider
+import com.iceiony.visualcalendar.providers.TimeProvider
 import com.iceiony.visualcalendar.providers.toTime
 import kotlinx.coroutines.flow.map
-import java.time.LocalDateTime
 
 @Composable
 fun CalendarDayView(
@@ -104,34 +99,4 @@ fun CalendarDayView(
     LaunchedEffect(Unit) {
     }
 
-}
-
-@Preview()
-@Composable
-fun CalendarDayViewPreview() {
-    val timeProvider = PreviewTimeProvider(
-        now = LocalDateTime.of(2025, 6, 26, 19, 10)
-    )
-
-    val dataProvider = PreviewDataProvider(
-        listOf(
-            listOf(
-                PreviewDataProvider.calendarEvent(
-                    "Test Event 1",
-                    LocalDateTime.of(2025, 6, 26, 8, 0),
-                    LocalDateTime.of(2025, 6, 26, 9, 0)
-                ),
-                PreviewDataProvider.calendarEvent(
-                    "Test Event 2 👌",
-                    LocalDateTime.of(2025, 6, 26, 10, 0),
-                    LocalDateTime.of(2025, 6, 26, 11, 0)
-                )
-            )
-        )
-    )
-
-    CalendarDayView(
-        dataProvider = dataProvider,
-        timeProvider = timeProvider
-    )
 }

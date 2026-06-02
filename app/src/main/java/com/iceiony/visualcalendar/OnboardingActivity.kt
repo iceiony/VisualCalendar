@@ -23,7 +23,7 @@ class OnboardingActivity : ComponentActivity() {
             finish()
             return
         } else {
-            viewModel = PermissionsViewModel(this)
+            viewModel = PermissionsViewModel(applicationContext)
 
             registerPermissionsLaunchers(viewModel)
 

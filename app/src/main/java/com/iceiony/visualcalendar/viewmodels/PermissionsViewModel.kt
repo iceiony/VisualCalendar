@@ -1,5 +1,6 @@
 package com.iceiony.visualcalendar.viewmodels
 
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
@@ -27,12 +28,6 @@ class PermissionsViewModel(
     val dataProvider: DataProvider = VisualCalendarApp.instance.dataProvider,
     val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
 ) : ViewModel() {
-
-    constructor(context: Context) : this(
-        context,
-        authProvider = VisualCalendarApp.instance.authProvider,
-        dataProvider = VisualCalendarApp.instance.dataProvider
-    )
 
     //individual permission fields
     var isOverlayPermissionGranted: Boolean by mutableStateOf(

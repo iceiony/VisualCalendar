@@ -1,4 +1,4 @@
-package com.iceiony.visualcalendar
+package com.iceiony.visualcalendar.providers
 
 import java.time.LocalDateTime
 

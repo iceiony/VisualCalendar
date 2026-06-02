@@ -6,8 +6,6 @@ import androidx.work.WorkManager
 import biweekly.Biweekly
 import biweekly.component.VEvent
 import com.iceiony.visualcalendar.BuildConfig
-import com.iceiony.visualcalendar.SystemTimeProvider
-import com.iceiony.visualcalendar.TimeProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

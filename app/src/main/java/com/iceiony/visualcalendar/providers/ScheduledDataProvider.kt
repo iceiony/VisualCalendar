@@ -9,14 +9,11 @@ import androidx.work.WorkerParameters
 import biweekly.component.VEvent
 import biweekly.property.DateEnd
 import biweekly.property.DateStart
-import com.iceiony.visualcalendar.TimeProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import java.text.SimpleDateFormat
@@ -56,6 +53,8 @@ abstract class ScheduledDataProvider(
         if (_instance != null) {
             _instance?.destroy()
         }
+
+        workManager.cancelAllWork()
 
         _instance = this
         _isActive = false

@@ -6,9 +6,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.iceiony.visualcalendar.preview.PreviewDataProvider
-import com.iceiony.visualcalendar.preview.PreviewTimeProvider
-import com.iceiony.visualcalendar.testutil.TestTimeProvider
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -16,12 +13,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.time.LocalDateTime
-import android.util.Log
-import androidx.work.Configuration
 import androidx.work.WorkManager
-import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
-import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
+import com.iceiony.visualcalendar.providers.PreviewDataProvider
+import com.iceiony.visualcalendar.providers.PreviewTimeProvider
 import com.iceiony.visualcalendar.providers.iCalDataProvider
 import kotlinx.coroutines.test.runTest
 
@@ -65,7 +60,7 @@ class CalendarDayViewTest {
     @Test
     fun `shows tomorrow's day name when after 6pm`() {
         val timeProvider = PreviewTimeProvider(
-            now = LocalDateTime.of(2025, 6, 26, 18, 0,1)
+            now = LocalDateTime.of(2025, 6, 26, 18, 0, 1)
         )
         val dataProvider = iCalDataProvider( context , timeProvider)
 
@@ -165,7 +160,7 @@ class CalendarDayViewTest {
         val this_evening    = LocalDateTime.of(2025, 6, 26, 18, 10)
         val tomorrow_morning = this_evening.toLocalDate().atStartOfDay().plusDays(1).plusHours(6)
 
-        val timeProvider = PreviewTimeProvider( now = this_evening )
+        val timeProvider = PreviewTimeProvider(now = this_evening)
 
         val dataProvider = PreviewDataProvider(
             listOf(
