@@ -1,6 +1,7 @@
 package com.iceiony.visualcalendar
 
 import android.app.Application
+import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.ui.test.assertAll
@@ -9,7 +10,6 @@ import androidx.compose.ui.test.isOff
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import kotlinx.coroutines.test.runTest
 import androidx.test.core.app.ApplicationProvider
@@ -17,12 +17,10 @@ import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.AuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
-import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
 import com.iceiony.visualcalendar.viewmodels.PermissionsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -42,7 +40,6 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
 import kotlin.String
 import kotlin.intArrayOf
-import kotlinx.coroutines.test.advanceTimeBy
 
 @RunWith(RobolectricTestRunner::class)
 @Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
@@ -51,18 +48,18 @@ class PermissionsChecklistTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
-    private lateinit var application: Application
+    private lateinit var context: Context
 
     @Before
     fun setup() {
         Dispatchers.setMain(StandardTestDispatcher())
-        application = ApplicationProvider.getApplicationContext<Application>()
-        WorkManagerTestInitHelper.initializeTestWorkManager(application)
+        context = ApplicationProvider.getApplicationContext<Application>()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
     }
 
     @After
     fun tearDown() {
-        WorkManager.getInstance(application).cancelAllWork()
+        WorkManager.getInstance(context).cancelAllWork()
         WorkManagerTestInitHelper.closeWorkDatabase()
         Dispatchers.resetMain()
     }
@@ -92,7 +89,7 @@ class PermissionsChecklistTest {
         composeTestRule.setContent {
             PermissionsChecklistView(
                 viewModel = PermissionsViewModel(
-                    application = application,
+                    context,
                     authProvider = unauthorisedAuthProvider()
                 )
             )
@@ -116,9 +113,9 @@ class PermissionsChecklistTest {
         ShadowSettings.setCanDrawOverlays(true)
 
         //pretend accessibility service enabled
-        val serviceId = "${application.packageName}/com.iceiony.CalendarAccessibilityService"
+        val serviceId = "${context.packageName}/com.iceiony.CalendarAccessibilityService"
         ShadowSecureSettings.setString(
-            application.contentResolver,
+            context.contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
             serviceId
         )
@@ -127,7 +124,7 @@ class PermissionsChecklistTest {
         composeTestRule.setContent {
             PermissionsChecklistView(
                 viewModel = PermissionsViewModel(
-                    application = application,
+                    context,
                     authProvider = unauthorisedAuthProvider()
                 )
             )
@@ -157,9 +154,9 @@ class PermissionsChecklistTest {
         ShadowSettings.setCanDrawOverlays(true)
 
         //grant accessibility service permissions
-        val serviceId = "${application.packageName}/com.iceiony.CalendarAccessibilityService"
+        val serviceId = "${context.packageName}/com.iceiony.CalendarAccessibilityService"
         ShadowSecureSettings.setString(
-            application.contentResolver,
+            context.contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
             serviceId
         )
@@ -184,7 +181,7 @@ class PermissionsChecklistTest {
         composeTestRule.setContent {
             PermissionsChecklistView(
                 viewModel = PermissionsViewModel(
-                    application = application,
+                    context,
                     authProvider = authProvider
                 )
             )

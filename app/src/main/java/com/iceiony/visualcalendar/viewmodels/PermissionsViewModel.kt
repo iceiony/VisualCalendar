@@ -1,6 +1,6 @@
 package com.iceiony.visualcalendar.viewmodels
 
-import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
@@ -18,37 +18,41 @@ import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.application
 import com.iceiony.visualcalendar.VisualCalendarApp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 
 class PermissionsViewModel(
-    application: Application,
+    context: Context,
     val authProvider: AuthProvider = VisualCalendarApp.instance.authProvider,
-    val dataProvider: DataProvider = VisualCalendarApp.instance.dataProvider
-) : AndroidViewModel(application) {
+    val dataProvider: DataProvider = VisualCalendarApp.instance.dataProvider,
+    val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+) : ViewModel() {
 
-    constructor(application: Application) : this(
-        application,
+    constructor(context: Context) : this(
+        context,
         authProvider = VisualCalendarApp.instance.authProvider,
         dataProvider = VisualCalendarApp.instance.dataProvider
     )
 
     //individual permission fields
     var isOverlayPermissionGranted: Boolean by mutableStateOf(
-        Permissions.isOverlayPermissionGranted(application)
+        Permissions.isOverlayPermissionGranted(context)
     )
     var isAccessibilityServiceEnabled: Boolean by mutableStateOf(
-        Permissions.isAccessibilityServiceEnabled(application)
+        Permissions.isAccessibilityServiceEnabled(context)
     )
     var isCalendarAccessGranted: Boolean by mutableStateOf(
         authProvider.isAuthorised()
     )
 
     var isCalendarSelected: Boolean by mutableStateOf(
-        Permissions.isMainCalendarConfigured(application)
+        Permissions.isMainCalendarConfigured(context)
     )
 
     //authentication and calendar access
@@ -72,12 +76,12 @@ class PermissionsViewModel(
     var accessibilityCaller: ActivityResultLauncher<Intent>? = null
 
     val overlayPermissionsCallback = ActivityResultCallback<ActivityResult> {
-        isOverlayPermissionGranted = Permissions.isOverlayPermissionGranted(application)
+        isOverlayPermissionGranted = Permissions.isOverlayPermissionGranted(context)
 
         if (!isOverlayPermissionGranted) {
             Toast
                 .makeText(
-                    application,
+                    context,
                     "Permission not granted to show overlay",
                     Toast.LENGTH_SHORT)
                 .show()
@@ -88,41 +92,43 @@ class PermissionsViewModel(
     }
 
     val accessibilityPermissionsCallback = ActivityResultCallback<ActivityResult> {
-        isAccessibilityServiceEnabled = Permissions.isAccessibilityServiceEnabled(application)
+        isAccessibilityServiceEnabled = Permissions.isAccessibilityServiceEnabled(context)
 
         if (!isAccessibilityServiceEnabled) {
             Toast
                 .makeText(
-                    application,
+                    context,
                     "Permission not granted for accessibility service",
-                    Toast.LENGTH_SHORT)
+                    Toast.LENGTH_LONG)
                 .show()
         }
 
         checkAllPermissions()
     }
 
-    fun requestOverlayPermissions() {
+    fun requestOverlayPermissions(context: Context) {
         val intent = Intent( Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
 
         overlayCaller?.launch(intent)
 
-        Toast.makeText(
-            application,
-            application.getString(R.string.grant_overlay_request),
-            Toast.LENGTH_LONG
-        ).show()
-
+        Toast
+            .makeText(
+                context,
+                context.applicationContext.getString(R.string.grant_overlay_request),
+                Toast.LENGTH_LONG)
+            .show()
     }
 
-    fun requestAccessibilityPermissions() {
+    fun requestAccessibilityPermissions(context: Context) {
         val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
 
         accessibilityCaller?.launch(intent)
 
+        context.applicationContext
+
         Toast.makeText(
-            application,
-            application.getString(R.string.grant_accessibility_request),
+            context,
+            context.applicationContext.getString(R.string.grant_accessibility_request),
             Toast.LENGTH_LONG
         ).show()
 

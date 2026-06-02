@@ -45,6 +45,7 @@ fun PermissionsChecklistView(
     modifier: Modifier = Modifier,
     viewModel: PermissionsViewModel,
 ) {
+    val context = LocalContext.current
 
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 2.dp)
@@ -67,7 +68,7 @@ fun PermissionsChecklistView(
         PermissionRow(
             header = "Overlay Permission" ,
             checked = viewModel.isOverlayPermissionGranted,
-            onClick = { viewModel.requestOverlayPermissions() },
+            onClick = { viewModel.requestOverlayPermissions(context) },
         ){
             Text("Required to display calendar overlay on top of other apps.")
         }
@@ -75,7 +76,7 @@ fun PermissionsChecklistView(
         PermissionRow(
             header = "Accessibility Service Permission" ,
             checked = viewModel.isAccessibilityServiceEnabled,
-            onClick = { viewModel.requestAccessibilityPermissions() },
+            onClick = { viewModel.requestAccessibilityPermissions(context) },
         ){
             Text("Required to detect when to show/hide the calendar overlay based on the foreground app.")
         }
@@ -118,7 +119,7 @@ private fun PermissionRow(
     ) {
         Checkbox(
             checked = checked,
-            onCheckedChange = {},
+            onCheckedChange = { onClick() },
         )
         Spacer(modifier = Modifier.width(8.dp))
         Column {
@@ -201,7 +202,7 @@ fun CalendarSelection(
 @Preview()
 @Composable
 fun PermissionsChecklistPreview() {
-    val context = LocalContext.current.applicationContext as Application
+    val context = LocalContext.current
     val authProvider = object : AuthProvider {
             override fun requestDeviceCode(): Flow<AuthProvider.DeviceCodeInfo> = flow {
                 emit(
