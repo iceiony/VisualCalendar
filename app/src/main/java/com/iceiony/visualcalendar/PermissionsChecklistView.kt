@@ -159,7 +159,7 @@ fun CalendarSelection(
 ) {
     Text("Google Calendar access is required to retrieve calendar events.")
     if (calendars.isEmpty()) {
-        Text("Your account does not have access to any google calendars.")
+        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
     } else {
         //create RadioList from calendar entries
         Text("Select the calendar you want to display.")

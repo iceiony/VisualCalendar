@@ -19,27 +19,22 @@ class OnboardingActivity : ComponentActivity() {
         Log.i("OnboardingActivity", "onCreate called")
         super.onCreate(savedInstanceState)
 
-        if (Permissions.allGranted(application)) {
-            finish()
-            return
-        } else {
-            viewModel = PermissionsViewModel(applicationContext)
+        viewModel = PermissionsViewModel(applicationContext)
 
-            registerPermissionsLaunchers(viewModel)
+        registerPermissionsLaunchers(viewModel)
 
-            lifecycleScope.launch {
-                snapshotFlow { viewModel.allGranted }
-                    .filter { it }
-                    .collect { finish() }
+        lifecycleScope.launch {
+            snapshotFlow { viewModel.allGranted }
+                .filter { it }
+                .collect { finish() }
 
-            }
-
-            setContent {
-                PermissionsChecklistView(viewModel = viewModel)
-            }
-
-            viewModel.start()
         }
+
+        setContent {
+            PermissionsChecklistView(viewModel = viewModel)
+        }
+
+        viewModel.start()
 
     }
 

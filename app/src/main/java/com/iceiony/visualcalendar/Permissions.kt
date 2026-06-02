@@ -6,15 +6,19 @@ import android.provider.Settings
 object Permissions {
 
     fun allGranted(context: Context): Boolean {
-        val canDrawOverlays =  isOverlayPermissionGranted(context)
+        if (!isAccessibilityServiceEnabled(context) )
+            return false
 
-        val accessibilityEnabled = isAccessibilityServiceEnabled(context)
+        if (! isMainCalendarConfigured(context) )
+            return false
 
-        val calendarConfigured = isMainCalendarConfigured(context)
+        if (! isAuthenticated(context) )
+            return false
 
-        val authenticated = isAuthenticated(context)
+        if (!isOverlayPermissionGranted(context))
+            return false
 
-        return canDrawOverlays && accessibilityEnabled && calendarConfigured && authenticated
+        return true
     }
 
     fun isOverlayPermissionGranted(context: Context): Boolean {
