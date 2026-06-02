@@ -15,6 +15,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -48,16 +49,38 @@ class GoogleAuthProviderTest {
     }
 
     @Test
-    fun `launches an Onboarding activity when no refresh token exist`() = runTest {
+    fun `launches an Onboarding activity when no refresh token exist and waits for completion`() = runTest {
         val authProvider = GoogleAuthProvider(context)
 
         authProvider.clearAuthState() // Ensure no tokens are stored
 
-        val token = authProvider.getValidAccessToken()
+        val tokenDeferred = async {
+            authProvider.getValidAccessToken()
+        }
 
-        assert(token == null) // Should return null since no token is available
+        advanceUntilIdle()
 
         intended(hasComponent(OnboardingActivity::class.java.name))
+
+        authProvider.setAuthState(
+            """
+                {
+                  "access_token" : "test_access_token" ,
+                  "expires_in" : 3600 ,
+                  "refresh_token" : "test_refresh_token" ,
+                  "scope" : "https://www.googleapis.com/auth/calendar.readonly",
+                  "token_type" : "Bearer"
+                }
+            """.trimIndent().let { org.json.JSONObject(it) }
+        )
+
+        advanceUntilIdle()
+
+        assert(tokenDeferred.isCompleted)
+
+        val token = tokenDeferred.getCompleted()
+
+        assert(token == "test_access_token")
     }
 
     @Test

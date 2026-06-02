@@ -131,7 +131,6 @@ class GoogleAuthProvider(
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
             )
-             delay(1000L * 5)
         }
 
         loginDeferred?.await()
