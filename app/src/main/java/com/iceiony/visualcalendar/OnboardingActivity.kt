@@ -34,8 +34,6 @@ class OnboardingActivity : ComponentActivity() {
             PermissionsChecklistView(viewModel = viewModel)
         }
 
-        viewModel.start()
-
     }
 
     private fun registerPermissionsLaunchers(viewModel: PermissionsViewModel) {

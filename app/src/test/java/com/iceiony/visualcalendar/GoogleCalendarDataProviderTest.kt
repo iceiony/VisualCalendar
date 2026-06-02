@@ -40,7 +40,7 @@ class GoogleCalendarDataProviderTest {
     private lateinit var context: Context
 
     companion object {
-        var authProvider: GoogleAuthProvider = GoogleAuthProvider()
+        var authProvider: GoogleAuthProvider? = null
     }
 
     @Before
@@ -58,8 +58,9 @@ class GoogleCalendarDataProviderTest {
                 .build()
         )
 
-        if(!authProvider.isAuthorised()) {
-            authProvider.setAuthState(
+        if(authProvider == null || !authProvider!!.isAuthorised()) {
+            authProvider = GoogleAuthProvider(context)
+            authProvider?.setAuthState(
                 """
                 {
                   "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,
@@ -70,9 +71,8 @@ class GoogleCalendarDataProviderTest {
                 }
             """.trimIndent().let { JSONObject(it) }
             )
-            val token = authProvider.getValidAccessToken()
 
-            assert(authProvider.isAuthorised() ) {
+            assert(authProvider!!.isAuthorised() ) {
                 "Test setup failed: Can't authorise GoogleCalendar access with provided test credentials."
             }
         }
@@ -87,7 +87,7 @@ class GoogleCalendarDataProviderTest {
 
     @Test
     fun `can retrieve the list of calendars the user has access to`() = runTest {
-        val dataProvider = GoogleCalendarDataProvider(context, authProvider = authProvider)
+        val dataProvider = GoogleCalendarDataProvider(context, authProvider = authProvider!!)
 
         val calendars = dataProvider.calendars()
 
@@ -103,7 +103,7 @@ class GoogleCalendarDataProviderTest {
 
     @Test
     fun `defaults to the first calendar when no calendar main is configured`() = runTest {
-        val dataProvider = GoogleCalendarDataProvider(context, authProvider = authProvider)
+        val dataProvider = GoogleCalendarDataProvider(context, authProvider = authProvider!!)
 
         val calendars = dataProvider.calendars()
 
@@ -129,7 +129,7 @@ class GoogleCalendarDataProviderTest {
 
     @Test
     fun `can subscribe to calendar events`()  = runTest {
-        val dataProvider = GoogleCalendarDataProvider( context, authProvider = authProvider )
+        val dataProvider = GoogleCalendarDataProvider( context, authProvider = authProvider!! )
 
         dataProvider.today().test {
             val events = awaitItem()
@@ -148,7 +148,7 @@ class GoogleCalendarDataProviderTest {
             context = context, scheduler = testScheduler
         )
 
-        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
+        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider!!)
 
         dataProvider.today().test {
             val events = awaitItem()
@@ -178,7 +178,7 @@ class GoogleCalendarDataProviderTest {
             context = context, scheduler = testScheduler
         )
 
-        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
+        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider!!)
 
         dataProvider.today().test {
             var events = awaitItem()
@@ -217,7 +217,7 @@ class GoogleCalendarDataProviderTest {
             context = context, scheduler = testScheduler,
         )
 
-        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
+        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider!!)
 
         val dayStart = java.time.LocalDate.of(2026, 2, 21)
             .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
@@ -280,7 +280,7 @@ class GoogleCalendarDataProviderTest {
             context = context, scheduler = testScheduler
         )
 
-        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider)
+        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider!!)
 
         dataProvider.today().test {
             val events = awaitItem()

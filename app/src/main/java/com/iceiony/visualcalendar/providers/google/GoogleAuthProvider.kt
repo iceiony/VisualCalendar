@@ -3,32 +3,29 @@ package com.iceiony.visualcalendar.providers.google
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.iceiony.visualcalendar.OnboardingActivity
-import com.iceiony.visualcalendar.VisualCalendarApp
-import com.iceiony.visualcalendar.providers.SecureStorage
-import okhttp3.OkHttpClient
-import java.time.Duration
 import androidx.core.content.edit
 import com.iceiony.visualcalendar.BuildConfig
-import com.iceiony.visualcalendar.Permissions
+import com.iceiony.visualcalendar.OnboardingActivity
 import com.iceiony.visualcalendar.providers.AuthProvider
+import com.iceiony.visualcalendar.providers.SecureStorage
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.isActive
-import okhttp3.FormBody
-import okhttp3.Request
-import org.json.JSONObject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.sync.withLock
+import okhttp3.FormBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import java.time.Duration
 
 class GoogleAuthProvider(
-    val context: Context = VisualCalendarApp.instance.applicationContext,
+    val context: Context,
     val secureStorage: SecureStorage = SecureStorage(context),
     val oauthURL : String = "https://oauth2.googleapis.com",
     val client: OkHttpClient = OkHttpClient.Builder().callTimeout(Duration.ofSeconds(30)).build()

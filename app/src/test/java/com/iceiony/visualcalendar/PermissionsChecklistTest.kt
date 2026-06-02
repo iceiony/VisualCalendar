@@ -17,10 +17,12 @@ import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.AuthProvider
 import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
+import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
 import com.iceiony.visualcalendar.testutil.ShadowSecureSettings
 import com.iceiony.visualcalendar.viewmodels.PermissionsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -149,20 +151,8 @@ class PermissionsChecklistTest {
 
     @Test
     fun `shows a list of calendars when already authenticated`()  = runTest {
-
-        //grant overlay permissions
-        ShadowSettings.setCanDrawOverlays(true)
-
-        //grant accessibility service permissions
-        val serviceId = "${context.packageName}/com.iceiony.CalendarAccessibilityService"
-        ShadowSecureSettings.setString(
-            context.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-            serviceId
-        )
-
         //pretend calendar access granted with valid token
-        val authProvider = GoogleAuthProvider()
+        val authProvider = GoogleAuthProvider(context)
         authProvider.setAuthState(
             """
                 {
@@ -175,30 +165,38 @@ class PermissionsChecklistTest {
             """.trimIndent().let { JSONObject(it) }
         )
 
+        val dataProvider = GoogleCalendarDataProvider(
+            context, authProvider = authProvider,
+        )
+
+        val viewModel = PermissionsViewModel(
+            context,
+            authProvider = authProvider,
+            dataProvider = dataProvider
+        )
+
         composeTestRule.waitForIdle()
 
         //inflate view
         composeTestRule.setContent {
-            PermissionsChecklistView(
-                viewModel = PermissionsViewModel(
-                    context,
-                    authProvider = authProvider
-                )
-            )
+            PermissionsChecklistView( viewModel = viewModel)
         }
 
-        waitForCoroutineExecution()
+        //waitForCoroutineExecution()
 
         composeTestRule.onNodeWithText("Select the calendar you want to display.").assertExists()
 
     }
 
-    private fun TestScope.waitForCoroutineExecution(times : Int = 4) {
+    private suspend fun TestScope.waitForCoroutineExecution(times : Int = 4) {
         advanceUntilIdle()
         composeTestRule.waitForIdle()
+        delay(100L)
+
         for (i in 1..times) {
             advanceTimeBy(1L)
             composeTestRule.waitForIdle()
+            delay(100L)
         }
     }
 

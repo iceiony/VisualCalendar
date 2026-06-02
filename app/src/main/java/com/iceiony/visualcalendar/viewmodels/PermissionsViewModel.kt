@@ -129,7 +129,7 @@ class PermissionsViewModel(
                isCalendarAccessGranted &&
                isCalendarSelected )
 
-    fun start() {
+    init {
         //authentication tracking
         scope.launch(Dispatchers.IO) {
             if(!isCalendarAccessGranted) {
