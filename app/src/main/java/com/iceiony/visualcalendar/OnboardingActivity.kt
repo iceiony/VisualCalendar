@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 class OnboardingActivity : ComponentActivity() {
-    val viewModel: PermissionsViewModel by viewModels()
+    lateinit var viewModel: PermissionsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i("OnboardingActivity", "onCreate called")
@@ -22,26 +22,28 @@ class OnboardingActivity : ComponentActivity() {
         if (Permissions.allGranted(application)) {
             finish()
             return
+        } else {
+            viewModel = PermissionsViewModel(this)
+
+            registerPermissionsLaunchers(viewModel)
+
+            lifecycleScope.launch {
+                snapshotFlow { viewModel.allGranted }
+                    .filter { it }
+                    .collect { finish() }
+
+            }
+
+            setContent {
+                PermissionsChecklistView(viewModel = viewModel)
+            }
+
+            viewModel.start()
         }
-
-        registerPermissionsLaunchers()
-
-        lifecycleScope.launch {
-            snapshotFlow { viewModel.allGranted }
-                .filter { it }
-                .collect { finish() }
-
-        }
-
-        setContent {
-            PermissionsChecklistView(viewModel = viewModel)
-        }
-
-        viewModel.start()
 
     }
 
-    private fun registerPermissionsLaunchers() {
+    private fun registerPermissionsLaunchers(viewModel: PermissionsViewModel) {
         viewModel.overlayCaller = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult(),
             viewModel.overlayPermissionsCallback

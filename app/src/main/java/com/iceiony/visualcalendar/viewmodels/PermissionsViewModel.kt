@@ -4,27 +4,21 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.ViewModel
 import com.iceiony.visualcalendar.Permissions
 import com.iceiony.visualcalendar.R
+import com.iceiony.visualcalendar.VisualCalendarApp
 import com.iceiony.visualcalendar.providers.AuthProvider
 import com.iceiony.visualcalendar.providers.DataProvider
-import com.iceiony.visualcalendar.providers.google.GoogleAuthProvider
-import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.application
-import com.iceiony.visualcalendar.VisualCalendarApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 
 class PermissionsViewModel(
@@ -50,7 +44,6 @@ class PermissionsViewModel(
     var isCalendarAccessGranted: Boolean by mutableStateOf(
         authProvider.isAuthorised()
     )
-
     var isCalendarSelected: Boolean by mutableStateOf(
         Permissions.isMainCalendarConfigured(context)
     )
@@ -63,7 +56,7 @@ class PermissionsViewModel(
         dataProvider.setMainCalendar(calendarId)
         mainCalendar = calendarId
 
-        viewModelScope.launch {
+        scope.launch {
             dataProvider.refresh()
         }
 
@@ -143,7 +136,7 @@ class PermissionsViewModel(
 
     fun start() {
         //authentication tracking
-        viewModelScope.launch(Dispatchers.IO) {
+        scope.launch(Dispatchers.IO) {
             if(!isCalendarAccessGranted) {
                 authProvider
                     .requestDeviceCode()
