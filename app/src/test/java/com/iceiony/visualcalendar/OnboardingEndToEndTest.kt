@@ -207,9 +207,7 @@ class OnboardingEndToEndTest {
 
         // Simulate granting overlay permission
         ShadowSettings.setCanDrawOverlays(true)
-        activity.viewModel.overlayPermissionsCallback.onActivityResult(
-            ActivityResult(Activity.RESULT_OK, Intent())
-        )
+        activity.viewModel.overlayPermissionsCallback(application)
 
         composeTestRule.waitForIdle()
         checkedCount = composeTestRule
@@ -230,9 +228,7 @@ class OnboardingEndToEndTest {
             serviceId
         )
 
-        activity.viewModel.accessibilityPermissionsCallback.onActivityResult(
-            ActivityResult(Activity.RESULT_OK, null)
-        )
+        activity.viewModel.accessibilityPermissionsCallback(application)
 
         waitForCoroutineExecution()
 

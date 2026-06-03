@@ -73,66 +73,6 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun `requests overlay permissions when not granted`() {
-        ShadowSettings.setCanDrawOverlays(false)
-
-        ActivityScenario.launch(OnboardingActivity::class.java)
-
-        val latestToastText = ShadowToast.getTextOfLatestToast()
-        assert(latestToastText == "Please enable overlay permission for Visual Calendar") {
-            "Expected toast message to be shown when overlay permission is not granted, but got: $latestToastText"
-        }
-
-        intended(hasAction(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
-        ShadowSettings.setCanDrawOverlays(true)
-    }
-
-    @Test
-    fun `creates toast when overlay permission not granted`() {
-        ShadowSettings.setCanDrawOverlays(false)
-        ShadowSettings.reset()
-
-        val scenario = ActivityScenario.launch(OnboardingActivity::class.java)
-
-        scenario.onActivity { activity ->
-            activity.viewModel.overlayPermissionsCallback.onActivityResult(
-                ActivityResult(Activity.RESULT_CANCELED, null)
-            )
-
-            val latestToastText = ShadowToast.getTextOfLatestToast()
-            assert( latestToastText == "Permission not granted to show overlay") {
-                "Expected toast message to be shown when overlay permission is not granted, but got: $latestToastText"
-            }
-        }
-    }
-
-    @Test
-    fun `requests accessibility when overlay already granted but not accessibility`() {
-        ShadowSettings.setCanDrawOverlays(true)
-        ActivityScenario.launch(OnboardingActivity::class.java)
-        intended(hasAction(Settings.ACTION_MANAGE_OVERLAY_PERMISSION), Intents.times(0))
-
-        intended(hasAction(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-    }
-
-    @Test
-    fun `does not open accessibility settings when already granted`() {
-        ShadowSettings.setCanDrawOverlays(true)
-
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val serviceId = "${context.packageName}/com.iceiony.CalendarAccessibilityService"
-
-        ShadowSecureSettings.setString(
-            context.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-            serviceId)
-
-        ActivityScenario.launch(OnboardingActivity::class.java)
-
-        intended(hasAction(Settings.ACTION_ACCESSIBILITY_SETTINGS), Intents.times(0))
-    }
-
-    @Test
     fun `waits for google authentication confirmation when no credentials available`()  = runTest {
         GoogleAuthProvider(application).clearAuthState()
 
@@ -154,17 +94,22 @@ class OnboardingActivityTest {
     }
 
     @Test
-    fun `completes the OnboardingActivity when permissions are already granted`()  = runTest{
-        GoogleAuthProvider(application).setAuthState(
+    fun `completes the OnboardingActivity when permissions already granted`()  = runTest{
+        VisualCalendarApp.instance.authProvider.setAuthState(
             """
-            {
-                "access_token": "test_access_token",
-                "refresh_token": "test_refresh_token",
-                "expires_in": 3600
-            }
+                {
+                  "access_token" : "${BuildConfig.TEST_ACCESS_TOKEN}" ,
+                  "expires_in" : ${-60} ,
+                  "refresh_token" : "${BuildConfig.TEST_REFRESH_TOKEN}" ,
+                  "scope" : "https://www.googleapis.com/auth/calendar.readonly",
+                  "token_type" : "Bearer"
+                }
             """.trimIndent().let { org.json.JSONObject(it) }
         )
-        GoogleCalendarDataProvider(context = application).setMainCalendar("test_calendar_id")
+        
+        VisualCalendarApp.instance.dataProvider.setMainCalendar(
+            VisualCalendarApp.instance.dataProvider.calendars().keys.first()
+        )
 
         ShadowSettings.setCanDrawOverlays(true)
 

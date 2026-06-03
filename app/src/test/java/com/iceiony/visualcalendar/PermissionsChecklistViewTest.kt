@@ -11,8 +11,11 @@ import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import kotlinx.coroutines.test.runTest
+import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.espresso.intent.Intents
+import androidx.test.espresso.intent.Intents.intended
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.AuthProvider
@@ -30,6 +33,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.json.JSONObject
 import org.junit.After
@@ -40,13 +44,12 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
-import kotlin.String
-import kotlin.intArrayOf
+import org.robolectric.shadows.ShadowToast
 
 @RunWith(RobolectricTestRunner::class)
 @Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
 @OptIn(ExperimentalCoroutinesApi::class)
-class PermissionsChecklistTest {
+class PermissionsChecklistViewTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -54,6 +57,8 @@ class PermissionsChecklistTest {
 
     @Before
     fun setup() {
+        Intents.init()
+
         Dispatchers.setMain(StandardTestDispatcher())
         context = ApplicationProvider.getApplicationContext<Application>()
         WorkManagerTestInitHelper.initializeTestWorkManager(context)
@@ -64,6 +69,8 @@ class PermissionsChecklistTest {
         WorkManager.getInstance(context).cancelAllWork()
         WorkManagerTestInitHelper.closeWorkDatabase()
         Dispatchers.resetMain()
+
+        Intents.release()
     }
 
     private fun unauthorisedAuthProvider() = object : AuthProvider {
@@ -107,6 +114,61 @@ class PermissionsChecklistTest {
         composeTestRule
             .onAllNodes(isToggleable())
             .assertAll(isOff())
+    }
+
+
+    @Test
+    fun `requests overlay permissions on row tap`() {
+        composeTestRule.setContent {
+            PermissionsChecklistView(
+                viewModel = PermissionsViewModel(
+                    context,
+                    authProvider = unauthorisedAuthProvider()
+                )
+            )
+        }
+
+        //locate the checkbox row by finding the text and then getting its parent
+        composeTestRule
+            .onNodeWithText("Overlay Permission")
+            .performClick()
+
+        composeTestRule.waitForIdle()
+
+        val latestToastText = ShadowToast.getTextOfLatestToast()
+        assert(latestToastText == "Please enable overlay permission for Visual Calendar") {
+            "Expected toast message to be shown when overlay permission is not granted, but got: $latestToastText"
+        }
+
+        intended(hasAction(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
+        ShadowSettings.setCanDrawOverlays(true)
+    }
+
+
+    @Test
+    fun `requests accessibility service enabling on row tap`() {
+        composeTestRule.setContent {
+            PermissionsChecklistView(
+                viewModel = PermissionsViewModel(
+                    context,
+                    authProvider = unauthorisedAuthProvider()
+                )
+            )
+        }
+
+        //locate the checkbox row by finding the text and then getting its parent
+        composeTestRule
+            .onNodeWithText("Accessibility Service Permission")
+            .performClick()
+
+        composeTestRule.waitForIdle()
+
+        val latestToastText = ShadowToast.getTextOfLatestToast()
+        assert(latestToastText == "Please enable Visual Calendar in Accessibility Services") {
+            "Expected toast message to be shown when overlay permission is not granted, but got: $latestToastText"
+        }
+
+        intended(hasAction(Settings.ACTION_ACCESSIBILITY_SETTINGS))
     }
 
     @Test

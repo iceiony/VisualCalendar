@@ -21,8 +21,6 @@ class OnboardingActivity : ComponentActivity() {
 
         viewModel = PermissionsViewModel(applicationContext)
 
-        registerPermissionsLaunchers(viewModel)
-
         lifecycleScope.launch {
             snapshotFlow { viewModel.allGranted }
                 .filter { it }
@@ -34,18 +32,6 @@ class OnboardingActivity : ComponentActivity() {
             PermissionsChecklistView(viewModel = viewModel)
         }
 
-    }
-
-    private fun registerPermissionsLaunchers(viewModel: PermissionsViewModel) {
-        viewModel.overlayCaller = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult(),
-            viewModel.overlayPermissionsCallback
-        )
-
-        viewModel.accessibilityCaller = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult(),
-            viewModel.accessibilityPermissionsCallback
-        )
     }
 
 }

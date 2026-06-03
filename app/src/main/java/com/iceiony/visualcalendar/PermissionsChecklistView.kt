@@ -1,5 +1,8 @@
 package com.iceiony.visualcalendar
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,6 +38,14 @@ fun PermissionsChecklistView(
     viewModel: PermissionsViewModel,
 ) {
     val context = LocalContext.current
+
+    viewModel.overlayCaller = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { viewModel.overlayPermissionsCallback(context)}
+
+    viewModel.accessibilityCaller = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { viewModel.accessibilityPermissionsCallback(context)}
 
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 2.dp)

@@ -9,6 +9,7 @@ import com.iceiony.visualcalendar.OnboardingActivity
 import com.iceiony.visualcalendar.providers.AuthProvider
 import com.iceiony.visualcalendar.providers.SecureStorage
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
@@ -126,11 +127,14 @@ class GoogleAuthProvider(
             !isAuthorised() && loginDeferred == null
         ) {
             loginDeferred = CompletableDeferred()
-            context.startActivity(
-                Intent(context, OnboardingActivity::class.java).apply {
+            val intent = Intent(context, OnboardingActivity::class.java)
+                .apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
-            )
+
+            withContext(Dispatchers.Main) {
+                context.startActivity(intent)
+            }
         }
 
         loginDeferred?.await()

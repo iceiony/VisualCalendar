@@ -63,7 +63,7 @@ class PermissionsViewModel(
     var overlayCaller: ActivityResultLauncher<Intent>? = null
     var accessibilityCaller: ActivityResultLauncher<Intent>? = null
 
-    val overlayPermissionsCallback = ActivityResultCallback<ActivityResult> {
+    fun overlayPermissionsCallback(context : Context) {
         isOverlayPermissionGranted = Permissions.isOverlayPermissionGranted(context)
 
         if (!isOverlayPermissionGranted) {
@@ -79,7 +79,7 @@ class PermissionsViewModel(
         checkAllPermissions()
     }
 
-    val accessibilityPermissionsCallback = ActivityResultCallback<ActivityResult> {
+    fun accessibilityPermissionsCallback(context: Context) {
         isAccessibilityServiceEnabled = Permissions.isAccessibilityServiceEnabled(context)
 
         if (!isAccessibilityServiceEnabled) {
@@ -111,8 +111,6 @@ class PermissionsViewModel(
         val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
 
         accessibilityCaller?.launch(intent)
-
-        context.applicationContext
 
         Toast.makeText(
             context,
