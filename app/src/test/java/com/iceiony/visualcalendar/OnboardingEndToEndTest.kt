@@ -11,6 +11,7 @@ import androidx.activity.result.ActivityResult
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModel
@@ -26,6 +27,7 @@ import com.iceiony.visualcalendar.testutil.TestInterceptor
 import com.iceiony.visualcalendar.viewmodels.PermissionsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -48,9 +50,6 @@ import org.robolectric.shadows.ShadowSettings
 @Config(shadows = [ShadowSecureSettings::class], sdk = [Build.VERSION_CODES.S])
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingEndToEndTest {
-
-
-
     @get:Rule
     val composeTestRule = createEmptyComposeRule()
     private lateinit var application: Application
@@ -59,9 +58,9 @@ class OnboardingEndToEndTest {
 
     @Before
     fun setup() {
-        Dispatchers.setMain(StandardTestDispatcher())
-
         Intents.init()
+
+        Dispatchers.setMain(StandardTestDispatcher())
 
         application = ApplicationProvider.getApplicationContext<Application>()
 
@@ -150,13 +149,15 @@ class OnboardingEndToEndTest {
     fun tearDown() {
         WorkManager.getInstance(application).cancelAllWork()
         WorkManagerTestInitHelper.closeWorkDatabase()
-        Intents.release()
         Dispatchers.resetMain()
+
+        Intents.release()
     }
 
     private fun TestScope.waitForCoroutineExecution(times : Int = 4) {
         advanceUntilIdle()
         composeTestRule.waitForIdle()
+
         for (i in 1..times) {
             advanceTimeBy(1L)
             composeTestRule.waitForIdle()
@@ -164,7 +165,7 @@ class OnboardingEndToEndTest {
     }
 
     @Test
-    fun `finishes the activity when all permissions are granted`()  = runTest {
+    fun `grant permissions one by one and then finish the activity`()  = runTest {
         controller.setup()
         composeTestRule.waitForIdle()
 
@@ -179,10 +180,15 @@ class OnboardingEndToEndTest {
 
         composeTestRule.onNodeWithText("Select the calendar you want to display.").assertDoesNotExist()
 
-        // advance time so mock authentication responses are processed
-        waitForCoroutineExecution()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule
+                .onAllNodesWithText("Select the calendar you want to display.")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
 
-        composeTestRule.onNodeWithText("Select the calendar you want to display.").assertExists()
+        composeTestRule.onNodeWithText("Select the calendar you want to display.")
+            .assertExists()
 
         checkedCount = composeTestRule
             .onAllNodes(isToggleable() and isOn())

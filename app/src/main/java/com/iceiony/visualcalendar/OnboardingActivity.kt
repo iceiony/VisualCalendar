@@ -13,13 +13,11 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 class OnboardingActivity : ComponentActivity() {
-    lateinit var viewModel: PermissionsViewModel
+    val viewModel: PermissionsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i("OnboardingActivity", "onCreate called")
         super.onCreate(savedInstanceState)
-
-        viewModel = PermissionsViewModel(applicationContext)
 
         lifecycleScope.launch {
             snapshotFlow { viewModel.allGranted }

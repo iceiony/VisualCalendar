@@ -106,7 +106,7 @@ class OnboardingActivityTest {
                 }
             """.trimIndent().let { org.json.JSONObject(it) }
         )
-        
+
         VisualCalendarApp.instance.dataProvider.setMainCalendar(
             VisualCalendarApp.instance.dataProvider.calendars().keys.first()
         )
