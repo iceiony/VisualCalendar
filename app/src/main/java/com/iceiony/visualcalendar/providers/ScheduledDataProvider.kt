@@ -66,7 +66,8 @@ abstract class ScheduledDataProvider(
             }
 
             try {
-                events.emit(getDaysEvents(target))
+                val eventList = getDaysEvents(target)
+                events.emit(eventList)
             } catch (e: Exception) {
                 Log.e("ScheduledDataProvider", "Error refreshing events", e)
             }

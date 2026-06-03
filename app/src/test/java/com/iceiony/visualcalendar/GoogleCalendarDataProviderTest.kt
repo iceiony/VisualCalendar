@@ -111,13 +111,13 @@ class GoogleCalendarDataProviderTest {
             "Test setup incorrect, authorisation should be an account with access to more than 1 calendar"
         }
 
-        assert( calendars.keys.first() == dataProvider.getMainCalendar()) {
-            "Expected selected calendar ID to be ${calendars.keys.first()}, but got ${dataProvider.getMainCalendar()}."
+        assert( dataProvider.getMainCalendar() == null || dataProvider.getMainCalendar()!!.isEmpty()) {
+            "Expected no main calendar to be configured yet, but got ${dataProvider.getMainCalendar()}."
         }
 
         dataProvider.setMainCalendar(calendars.keys.last())
 
-        assert( calendars.keys.first() != dataProvider.getMainCalendar()) {
+        assert( dataProvider.getMainCalendar() != null ) {
             "Expected selected calendar ID to have changed"
         }
 
@@ -150,6 +150,8 @@ class GoogleCalendarDataProviderTest {
 
         val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider!!)
 
+        setMainCalendar(dataProvider)
+
         dataProvider.today().test {
             val events = awaitItem()
 
@@ -171,6 +173,14 @@ class GoogleCalendarDataProviderTest {
         }
     }
 
+    private suspend fun setMainCalendar(dataProvider: GoogleCalendarDataProvider) {
+        val mainCalendar =
+            dataProvider.calendars().filter { it.value.contains("Teo") }.keys.firstOrNull()
+                ?: throw AssertionError("Test setup incorrect: No calendar found with description containing 'Teo'")
+
+        dataProvider.setMainCalendar(mainCalendar)
+    }
+
     @Test
     fun `can get tomorrow's events after 6pm`()  = runTest{
         val timeProvider = TestTimeProvider(
@@ -179,6 +189,7 @@ class GoogleCalendarDataProviderTest {
         )
 
         val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider!!)
+        setMainCalendar(dataProvider)
 
         dataProvider.today().test {
             var events = awaitItem()
@@ -218,6 +229,7 @@ class GoogleCalendarDataProviderTest {
         )
 
         val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider!!)
+        setMainCalendar(dataProvider)
 
         val dayStart = java.time.LocalDate.of(2026, 2, 21)
             .atStartOfDay(java.time.ZoneOffset.systemDefault()).toInstant()
@@ -281,6 +293,7 @@ class GoogleCalendarDataProviderTest {
         )
 
         val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider!!)
+        setMainCalendar(dataProvider)
 
         dataProvider.today().test {
             val events = awaitItem()
