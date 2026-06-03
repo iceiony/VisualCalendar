@@ -54,6 +54,18 @@ class CalendarDayActivityTest {
             context.contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
             serviceId)
+
+        //assume calendar configured
+        context.getSharedPreferences("google_calendar", Context.MODE_PRIVATE)
+            .edit()
+            .putString("calendar_id", "test_calendar_id")
+            .apply()
+
+        //assume authenticated
+        context.getSharedPreferences("google_auth", Context.MODE_PRIVATE)
+            .edit()
+            .putLong("token_expiry", System.currentTimeMillis() + 3600 * 1000)
+            .apply()
     }
 
     @After
