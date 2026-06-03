@@ -23,7 +23,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class PermissionsViewModel(
-    context: Context,
+    context: Context = VisualCalendarApp.instance,
     val authProvider: AuthProvider = VisualCalendarApp.instance.authProvider,
     val dataProvider: DataProvider = VisualCalendarApp.instance.dataProvider,
     val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
