@@ -95,32 +95,36 @@ class GoogleAuthProviderTest {
         assert(deviceCodeInfo.intervalSeconds > 0)
     }
 
-    //@Test
-    //fun `get new refresh token for tests` ()  = runTest{
-    //    val authProvider = GoogleAuthProvider(context)
+    @Test
+    fun `get new refresh token for tests` ()  = runTest{
+        //skip test unless you wish to manually retrieve a valid access token
+        return@runTest
 
-    //    authProvider.requestDeviceCode().test {
-    //        val deviceCode = awaitItem()
+        val authProvider = GoogleAuthProvider(context)
 
-    //        println("Please visit ${deviceCode.verificationUrl} and enter the code: ${deviceCode.userCode}")
+        authProvider.requestDeviceCode().test {
+            val deviceCode = awaitItem()
 
-    //        //sleep for 60 seconds to allow time for authorisation
-    //        Thread.sleep(60_000)
+            println("Please visit ${deviceCode.verificationUrl} and enter the code: ${deviceCode.userCode}")
 
-    //        println("access_token: " + authProvider.secureStorage.getValue("access_token"))
-    //        println("refresh_token: " + authProvider.secureStorage.getValue("refresh_token"))
+            advanceUntilIdle()
 
-    //        awaitItem()
+            val token = authProvider.getValidAccessToken()
 
-    //        println("access_token: " + authProvider.secureStorage.getValue("access_token"))
-    //        println("refresh_token: " + authProvider.secureStorage.getValue("refresh_token"))
-    //    }
+            advanceUntilIdle()
 
-    //    advanceUntilIdle()
+            println("access_token: " + authProvider.secureStorage.getValue("access_token"))
+            println("refresh_token: " + authProvider.secureStorage.getValue("refresh_token"))
 
-    //    println("access_token: " + authProvider.secureStorage.getValue("access_token"))
-    //    println("refresh_token: " + authProvider.secureStorage.getValue("refresh_token"))
-    //}
+            assert(!token.isNullOrEmpty()) {
+                "Expected to receive a valid access token, but got an empty string."
+            }
+
+            //consume any outstanding events to prevent test failures from unexpected emissions
+            expectNoEvents()
+        }
+
+    }
 
     @Test
     fun `device code updates after expiration duration passes with no authorisation`() = runTest {
