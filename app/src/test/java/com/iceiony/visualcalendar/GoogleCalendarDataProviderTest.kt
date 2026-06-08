@@ -175,7 +175,7 @@ class GoogleCalendarDataProviderTest {
 
     private suspend fun setMainCalendar(dataProvider: GoogleCalendarDataProvider, keyword: String = "Teo") {
         val mainCalendar =
-            dataProvider.calendars().filter { it.value.contains("Cornel") }.keys.firstOrNull()
+            dataProvider.calendars().filter { it.value.contains(keyword) }.keys.firstOrNull()
                 ?: throw AssertionError("Test setup incorrect: No calendar found with description containing 'Teo'")
 
         dataProvider.setMainCalendar(mainCalendar)
@@ -201,7 +201,6 @@ class GoogleCalendarDataProviderTest {
             timeProvider.advanceTimeBy(60 * 30 + 1) // 18:00:01
 
             events = awaitItem()
-                ?: throw AssertionError("Expected to receive list of events after time advanced, but got null.")
 
             assert(events.isNotEmpty()) {
                 "Expected next days' events to have been published."
