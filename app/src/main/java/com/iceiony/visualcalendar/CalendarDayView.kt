@@ -1,12 +1,20 @@
 package com.iceiony.visualcalendar
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,6 +25,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.iceiony.visualcalendar.providers.DataProvider
@@ -66,30 +76,50 @@ fun CalendarDayView(
 
 
         events.forEach { event ->
-
             Box(
                 modifier = Modifier.fillMaxWidth().padding(top = 2.dp)
             ) {
-                Box(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(IntrinsicSize.Min)
                         .background(
                             color = colorResource(id = R.color.white).copy(alpha = 0.9f),
                             shape = RoundedCornerShape(8.dp)
                         )
+                        .padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val attachment = event.attachments.firstOrNull()
+                    if (attachment != null) {
+                        val bitmap = remember(attachment) {
+                            BitmapFactory.decodeByteArray(attachment.data, 0, attachment.data.size)
+                        }
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "event image attachment",
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .aspectRatio(1f)
+                                //.background(Color.Blue)
+                                .padding(vertical = 4.dp)
+                                .padding(start = 8.dp, end = 0.dp )
+                        )
+                    }
+
                     Text(
                         text = event.summary.value,
                         style = MaterialTheme.typography.headlineLarge,
                         modifier = Modifier
-                            .padding(vertical = 2.dp, horizontal = 16.dp)
-                            .align(Alignment.CenterStart),
+                            .weight(1f)
+                            .padding(vertical = 2.dp)
+                            .padding(start = 8.dp)
                     )
 
                     Text(
                         text = "(${event.dateStart.toTime()} - ${event.dateEnd.toTime()})",
                         color = colorResource(id = R.color.gray_700),
-                        modifier = Modifier.padding(end = 8.dp).align(Alignment.CenterEnd)
+                        modifier = Modifier.padding(end = 8.dp)
                     )
                 }
             }

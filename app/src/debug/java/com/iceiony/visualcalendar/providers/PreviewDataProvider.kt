@@ -1,6 +1,7 @@
 package com.iceiony.visualcalendar.providers
 
 import biweekly.component.VEvent
+import biweekly.property.Attachment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -20,7 +21,8 @@ class PreviewDataProvider(
         fun calendarEvent(
             summary: String,
             startTime: LocalDateTime,
-            endTime: LocalDateTime
+            endTime: LocalDateTime,
+            attachments: List<ByteArray?> = emptyList(),
         ): VEvent {
             val event = VEvent()
 
@@ -29,9 +31,19 @@ class PreviewDataProvider(
             event.setDateStart(
                 Date.from(startTime.atZone(systemDefault()).toInstant())
             )
+
             event.setDateEnd(
                 Date.from(endTime.atZone(systemDefault()).toInstant())
             )
+
+            for (content in attachments) {
+                event.addAttachment(
+                    Attachment(
+                        "image/jpg",
+                        content
+                    )
+                )
+            }
 
             return event
         }

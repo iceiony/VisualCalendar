@@ -3,6 +3,7 @@ package com.iceiony.visualcalendar
 import android.content.Context
 import android.os.Build
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -17,6 +18,8 @@ import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.iceiony.visualcalendar.providers.PreviewDataProvider
 import com.iceiony.visualcalendar.providers.PreviewTimeProvider
+import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider
+import com.iceiony.visualcalendar.providers.google.GoogleCalendarDataProvider.Companion.fetchGoogleDriveImageData
 import com.iceiony.visualcalendar.providers.iCalDataProvider
 import kotlinx.coroutines.test.runTest
 
@@ -191,5 +194,41 @@ class CalendarDayViewTest {
 
         composeTestRule.onNodeWithText("It's FRIDAY").assertExists()
         composeTestRule.onNodeWithText("Friday event 1").assertExists()
+    }
+
+    @Test
+    fun `events with image attachments display the image`() {
+        val timeProvider = PreviewTimeProvider(
+            now = LocalDateTime.of(2026, 5, 29, 7, 30)
+        )
+
+        val dataProvider = PreviewDataProvider(
+            listOf(
+                listOf(
+                    PreviewDataProvider.calendarEvent(
+                        "Event with image",
+                        LocalDateTime.of(2026, 5, 29, 10, 0),
+                        LocalDateTime.of(2026, 5, 29, 11, 0),
+                        attachments = listOf(
+                            fetchGoogleDriveImageData("1WSrXjudMIdnxApPHx9QXZaVDq5MPzrID")
+                        )
+                    )
+                )
+            )
+        )
+
+        composeTestRule.setContent {
+            CalendarDayView(
+                dataProvider = dataProvider,
+                timeProvider = timeProvider
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithContentDescription("event image attachment")
+            .assertExists()
+
     }
 }

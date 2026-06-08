@@ -33,6 +33,29 @@ class GoogleCalendarDataProvider(
     workManager = WorkManager.getInstance(context.applicationContext),
     timeProvider, scope , client
 ) {
+
+    companion object {
+        fun fetchGoogleDriveImageData(
+            fileId: String,
+            client: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder().callTimeout(java.time.Duration.ofSeconds(30)).build()
+        ): ByteArray? {
+            val response = client.newCall(
+                Request.Builder()
+                    .url("https://drive.google.com/uc?export=download&id=$fileId")
+                    .get()
+                    .build()
+            ).execute()
+
+            if (!response.isSuccessful) {
+                Log.w("GoogleCalendarDataProvider", "Failed to fetch image from Google Drive: ${response.code}")
+                return null
+            }
+
+            return response.body?.bytes()
+        }
+    }
+
+
     val prefs = context.getSharedPreferences("google_calendar", Context.MODE_PRIVATE)
 
     override suspend fun calendars(): Map<String, String> {
@@ -140,36 +163,16 @@ class GoogleCalendarDataProvider(
                     attachment.getString("mimeType").toString().startsWith("image/") &&
                     attachment.has("fileUrl")
                 ) {
+                    val contentId = attachment.getString("fileId").toString()
                     return Attachment(
                         attachment.getString("mimeType").toString(),
-                        attachment.getString("fileUrl").toString()
-                    ).apply{
-                        contentId = attachment.getString("fileId").toString()
-                        data = fetchGoogleDriveImageData(contentId)
-                    }
+                        fetchGoogleDriveImageData(contentId, client)
+                    )
                 }
             }
         }
 
         return null
-    }
-
-    private suspend fun fetchGoogleDriveImageData(fileId: String): ByteArray? {
-        val token = authProvider.getValidAccessToken() ?: return null
-
-        val response = client.newCall(
-            Request.Builder()
-                .url("https://drive.google.com/uc?export=download&id=$fileId")
-                .get()
-                .build()
-        ).execute()
-
-        if (!response.isSuccessful) {
-            Log.w("GoogleCalendarDataProvider", "Failed to fetch image from Google Drive: ${response.code}")
-            return null
-        }
-
-        return response.body?.bytes()
     }
 
     override fun setMainCalendar(calendarId: String) {
