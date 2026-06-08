@@ -173,9 +173,9 @@ class GoogleCalendarDataProviderTest {
         }
     }
 
-    private suspend fun setMainCalendar(dataProvider: GoogleCalendarDataProvider) {
+    private suspend fun setMainCalendar(dataProvider: GoogleCalendarDataProvider, keyword: String = "Teo") {
         val mainCalendar =
-            dataProvider.calendars().filter { it.value.contains("Teo") }.keys.firstOrNull()
+            dataProvider.calendars().filter { it.value.contains("Cornel") }.keys.firstOrNull()
                 ?: throw AssertionError("Test setup incorrect: No calendar found with description containing 'Teo'")
 
         dataProvider.setMainCalendar(mainCalendar)
@@ -312,6 +312,35 @@ class GoogleCalendarDataProviderTest {
                 start.isAfter(dayStart) && start.isBefore(dayEnd)
             }) {
                 "All events should be within next day's date range."
+            }
+        }
+    }
+
+    @Test
+    fun `events with attached images have the image data included`() = runTest {
+        val timeProvider = TestTimeProvider(
+            now = LocalDateTime.of(2026, 6, 10, 6, 30),
+            context = context, scheduler = testScheduler
+        )
+
+        val dataProvider = GoogleCalendarDataProvider(context, timeProvider, authProvider!!)
+        setMainCalendar(dataProvider, "Cornel")
+
+        dataProvider.today().test {
+            val events = awaitItem()
+
+            assert(events.isNotEmpty()) {
+                "Expected next days' events to have been published."
+            }
+
+            assert(events.size == 1) {
+                "Test setup incorrect: Expected exactly one event for the test date, but found ${events.size}."
+            }
+
+            val event = events.first()
+
+            assert(event.attachments != null && event.attachments.size == 1) {
+                "Expected at one event with attachments, but found none."
             }
         }
     }

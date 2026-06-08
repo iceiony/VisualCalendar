@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.core.content.edit
 import androidx.work.WorkManager
 import biweekly.component.VEvent
+import biweekly.property.Attachment
 import com.iceiony.visualcalendar.providers.SystemTimeProvider
 import com.iceiony.visualcalendar.providers.TimeProvider
 import com.iceiony.visualcalendar.VisualCalendarApp
@@ -99,12 +100,18 @@ class GoogleCalendarDataProvider(
         Log.d("GoogleCalendarDataProvider", "Received ${items.length()} events for calendar $mainCalendar")
         return (0 until items.length()).map { i ->
             val item = items.getJSONObject(i)
-            VEvent().apply {
+            val event = VEvent().apply {
                 setSummary(item.optString("summary", "(No Title)"))
                 setDateStart(parseDateTime(item.getJSONObject("start")))
                 setDateEnd(parseDateTime(item.getJSONObject("end")))
-                //extractImageUrl(item)?.let { addExperimentalProperty("X-IMAGE-URL", it) }
             }
+
+            val imageAttachment = extractImageUrl(item)
+            if (imageAttachment != null) {
+                event.addAttachment(imageAttachment)
+            }
+
+            event
         }
     }
 
@@ -121,18 +128,27 @@ class GoogleCalendarDataProvider(
         }
     }
 
-    private fun extractImageUrl(item: JSONObject): String? {
+    private fun extractImageUrl(item: JSONObject): Attachment? {
         if (item.has("attachments")) {
             val attachments = item.getJSONArray("attachments")
+
             for (i in 0 until attachments.length()) {
                 val attachment = attachments.getJSONObject(i)
-                if (attachment.optString("FMTTYPE").startsWith("image/")) {
-                    return attachment.optString("fileUrl").takeIf { it.isNotEmpty() }
+
+                if(
+                    attachment.has("mimeType") &&
+                    attachment.getString("mimeType").toString().startsWith("image/") &&
+                    attachment.has("fileUrl")
+                ) {
+                    return Attachment(
+                        attachment.getString("mimeType").toString(),
+                        attachment.getString("fileUrl").toString()
+                    )
                 }
             }
         }
-        val description = item.optString("description")
-        return Regex("""\[image](https?://\S+)""").find(description)?.groupValues?.get(1)
+
+        return null
     }
 
     override fun setMainCalendar(calendarId: String) {
