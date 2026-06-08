@@ -47,7 +47,10 @@ class GoogleAuthProvider(
                     .post(
                         FormBody.Builder()
                             .add("client_id", BuildConfig.GOOGLE_CLIENT_ID)
-                            .add("scope", "https://www.googleapis.com/auth/calendar.readonly")
+                            .add(
+                                "scope",
+                                "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/drive.file"
+                            )
                             .build()
                     )
                     .build()

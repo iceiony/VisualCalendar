@@ -106,7 +106,7 @@ class GoogleCalendarDataProvider(
                 setDateEnd(parseDateTime(item.getJSONObject("end")))
             }
 
-            val imageAttachment = extractImageUrl(item)
+            val imageAttachment = extractImage(item)
             if (imageAttachment != null) {
                 event.addAttachment(imageAttachment)
             }
@@ -128,7 +128,7 @@ class GoogleCalendarDataProvider(
         }
     }
 
-    private fun extractImageUrl(item: JSONObject): Attachment? {
+    private suspend fun extractImage(item: JSONObject): Attachment? {
         if (item.has("attachments")) {
             val attachments = item.getJSONArray("attachments")
 
@@ -143,12 +143,33 @@ class GoogleCalendarDataProvider(
                     return Attachment(
                         attachment.getString("mimeType").toString(),
                         attachment.getString("fileUrl").toString()
-                    )
+                    ).apply{
+                        contentId = attachment.getString("fileId").toString()
+                        data = fetchGoogleDriveImageData(contentId)
+                    }
                 }
             }
         }
 
         return null
+    }
+
+    private suspend fun fetchGoogleDriveImageData(fileId: String): ByteArray? {
+        val token = authProvider.getValidAccessToken() ?: return null
+
+        val response = client.newCall(
+            Request.Builder()
+                .url("https://drive.google.com/uc?export=download&id=$fileId")
+                .get()
+                .build()
+        ).execute()
+
+        if (!response.isSuccessful) {
+            Log.w("GoogleCalendarDataProvider", "Failed to fetch image from Google Drive: ${response.code}")
+            return null
+        }
+
+        return response.body?.bytes()
     }
 
     override fun setMainCalendar(calendarId: String) {

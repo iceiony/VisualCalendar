@@ -342,6 +342,12 @@ class GoogleCalendarDataProviderTest {
             assert(event.attachments != null && event.attachments.size == 1) {
                 "Expected at one event with attachments, but found none."
             }
+
+             val attachment = event.attachments.first()
+
+            assert(attachment.data != null && attachment.data.isNotEmpty()) {
+                "Expected attachment to have non-empty data, but it was empty."
+            }
         }
     }
 
