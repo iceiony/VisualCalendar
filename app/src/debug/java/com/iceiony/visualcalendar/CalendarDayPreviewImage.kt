@@ -13,13 +13,13 @@ import java.io.ByteArrayOutputStream
 import java.time.LocalDateTime
 
 private val previewImageBytes: ByteArray by lazy {
-    val size = 24
+    val size = 240
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val paint = Paint()
 
     // Checkerboard pattern
-    val tile = 6
+    val tile = 24
     for (row in 0 until size / tile) {
         for (col in 0 until size / tile) {
             paint.color = if ((row + col) % 2 == 0) Color.WHITE else Color.parseColor("#4A90D9")

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.iceiony.visualcalendar.providers.DataProvider
@@ -98,12 +100,14 @@ fun CalendarDayView(
                         Image(
                             bitmap = bitmap.asImageBitmap(),
                             contentDescription = "event image attachment",
+                            contentScale = ContentScale.Fit,
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .aspectRatio(1f)
+                                .widthIn(max = 43.dp)
                                 //.background(Color.Blue)
-                                .padding(vertical = 4.dp)
-                                .padding(start = 8.dp, end = 0.dp )
+                                .padding(vertical = 3.dp)
+                                .padding(start = 5.dp, end = 0.dp )
                         )
                     }
 
