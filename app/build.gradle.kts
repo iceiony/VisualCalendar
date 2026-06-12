@@ -1,3 +1,9 @@
+import java.util.Properties
+val secretsProperties = Properties().apply {
+    val file = rootProject.file("secrets.properties")
+    if (file.exists()) load(file.inputStream())
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -16,16 +22,26 @@ android {
 
     defaultConfig {
         applicationId = "com.iceiony.visualcalendar"
-        minSdk = 30
+        minSdk = 34
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(secretsProperties.getProperty("RELEASE_STORE_FILE", ""))
+            storePassword = secretsProperties.getProperty("RELEASE_STORE_PASSWORD", "")
+            keyAlias = secretsProperties.getProperty("RELEASE_KEY_ALIAS", "")
+            keyPassword = secretsProperties.getProperty("RELEASE_KEY_PASSWORD", "")
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            signingConfig   = signingConfigs.getByName("release")
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
