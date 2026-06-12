@@ -46,4 +46,4 @@ If this privacy policy is updated, the revised version will be posted with an up
 
 ## Contact
 
-If you have any questions about this privacy policy, please contact us at: [your email address]
+If you have any questions about this privacy policy, please contact us at: adrian@ionita.me
