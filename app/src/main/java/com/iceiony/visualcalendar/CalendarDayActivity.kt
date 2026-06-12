@@ -24,6 +24,8 @@ class CalendarDayActivity : ComponentActivity() {
             finish()
 
         } else {
+            window.decorView.setBackgroundColor(android.graphics.Color.DKGRAY)
+
             setContent {
                 CalendarDayView(VisualCalendarApp.instance.dataProvider)
             }
