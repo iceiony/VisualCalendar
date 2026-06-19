@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "com.iceiony.visualcalendar"
-        minSdk = 34
+        minSdk = 30
         versionCode = 1
         versionName = "1.0"
 
@@ -41,7 +41,7 @@ android {
     buildTypes {
         release {
             signingConfig   = signingConfigs.getByName("release")
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
