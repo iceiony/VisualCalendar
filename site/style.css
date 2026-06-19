@@ -1,0 +1,146 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --amber:     #D4922A;
+  --amber-lt:  #E0A544;
+  --grey-row:  #E5E1DC;
+  --slate:     #3A3530;
+  --mid:       #7A756D;
+  --bg:        #FFFFFF;
+  --radius:    16px;
+  --gap:       6px;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--slate);
+  background: var(--bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- LAYOUT CONTAINER ---- */
+.rows, .page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--gap);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ---- HEADER ---- */
+.site-header {
+  background: var(--amber);
+  color: #fff;
+  padding: 10pt 24pt;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 12pt;
+}
+.site-header img {
+  width: 40pt;
+  height: 40pt;
+  border-radius: 50%;
+  background: #fff;
+  padding: 3px;
+}
+.site-header h1,
+.site-header a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+/* ---- CONTENT ROWS ---- */
+.row, .content {
+  background: var(--grey-row);
+  border-radius: var(--radius);
+  padding: 48px 40px;
+}
+
+/* ---- BUTTONS ---- */
+.download-btn {
+  display: inline-block;
+  background: var(--amber);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 15px 36px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+.download-btn:hover,
+.download-btn:focus {
+  background: var(--amber-lt);
+  outline: none;
+}
+
+.kofi-link {
+  display: inline-block;
+  background: var(--slate);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 14px 32px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+.kofi-link:hover,
+.kofi-link:focus {
+  opacity: 0.82;
+  outline: none;
+}
+
+/* ---- FOOTER ---- */
+.row--footer, .site-footer {
+  background: var(--grey-row);
+  border-radius: var(--radius);
+  text-align: center;
+  padding: 28px 40px;
+  font-size: 0.85rem;
+  color: var(--mid);
+}
+.row--footer a, .site-footer a {
+  color: var(--amber);
+  text-decoration: none;
+  font-weight: 500;
+}
+.row--footer a:hover, .site-footer a:hover {
+  text-decoration: underline;
+}
+
+/* ---- TYPOGRAPHY (shared) ---- */
+h2 {
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin-top: 28px;
+  margin-bottom: 8px;
+}
+
+/* ---- LINKS inside content ---- */
+.content a, .row a:not(.download-btn):not(.kofi-link) {
+  color: var(--amber);
+  text-decoration: none;
+  font-weight: 500;
+}
+.content a:hover, .row a:not(.download-btn):not(.kofi-link):hover {
+  text-decoration: underline;
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 360pt) {
+  .site-header { padding: 22px 20px; }
+  .row, .content { padding: 36px 24px; }
+  :root { --gap: 5px; --radius: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
