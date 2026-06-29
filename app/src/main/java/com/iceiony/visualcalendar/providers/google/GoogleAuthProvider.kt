@@ -49,7 +49,7 @@ class GoogleAuthProvider(
                             .add("client_id", BuildConfig.GOOGLE_CLIENT_ID)
                             .add(
                                 "scope",
-                                "https://www.googleapis.com/auth/calendar.calendarlist.readonly https://www.googleapis.com/auth/calendar.events.readonly https://www.googleapis.com/auth/drive.file "
+                                "https://www.googleapis.com/auth/calendar.readonly"
                             )
                             .build()
                     )
